@@ -1,0 +1,3 @@
+#!/bin/sh
+
+systemctl start cam-server

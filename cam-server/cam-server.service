@@ -1,0 +1,14 @@
+[Unit]
+Description=Camera Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/pi/cam-server
+ExecStart=/home/pi/cam-server/startup/start.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+

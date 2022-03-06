@@ -1,0 +1,14 @@
+[Unit]
+Description=UDP Splitter
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/pi/udp-splitter
+ExecStart=/home/pi/udp-splitter/startup/start.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+

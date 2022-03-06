@@ -1,0 +1,44 @@
+<div style="padding: 10px">
+    <style>
+        h3 {
+            font-size: 16pt;
+        }
+
+        .panel_button {
+            display: inline-block;
+            color: white;
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .panel_button:hover {
+            font-weight: bold;
+        }
+
+    </style>
+
+    <script type="text/javascript">
+        function onDoPowerOffClick() {
+            if(confirm("Power off the CC?")) {
+                const listener = window.workerListener;
+                if (listener && listener.onWorkerCommand) {
+                    // Send the specified command to the worker.
+                    listener.onWorkerCommand("poweroff", "power_off", { });
+                }
+            }
+        }
+
+        function onDoRebootClick() {
+            if(confirm("Reboot the CC?")) {
+                const listener = window.workerListener;
+                if (listener && listener.onWorkerCommand) {
+                    // Send the specified command to the worker.
+                    listener.onWorkerCommand("poweroff", "reboot", {});
+                }
+            }
+        }
+    </script>
+
+    <div id="do_poweroff" class="panel_button worker_control" onclick="onDoPowerOffClick();">Power Off</div>
+    <div id="do_reboot" class="panel_button worker_control" onclick="onDoRebootClick();">Reboot</div>
+</div>

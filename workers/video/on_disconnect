@@ -1,0 +1,9 @@
+#!/bin/sh
+
+IP=$1
+# echo $0: IP address is $IP
+
+echo del $IP | nc localhost 7070 -w0
+
+
+

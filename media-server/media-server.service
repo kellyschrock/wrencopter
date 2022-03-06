@@ -1,0 +1,14 @@
+[Unit]
+Description=Media Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/pi/media-server
+ExecStart=/home/pi/media-server/startup/start.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
