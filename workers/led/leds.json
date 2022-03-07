@@ -1,0 +1,17 @@
+{
+    "default": { "id": "default", "text": "Default", "is_default": true },
+    "headlights_on": { "id": "headlights_on", "text": "Headlights on", "command": "headlights on" },
+    "headlights_off": { "id": "headlights_off", "text": "Headlights off", "command": "headlights off" },
+    "cop_mode": { "id": "cop_mode", "text": "Cop Mode", "command": "cop_mode" },
+    "disco": { "id": "disco", "text": "Disco!", "command": "disco" },
+	"plane_mode": { "id": "plane_mode", "text": "Plane Mode", "command": "plane_mode" },
+    "breathe_white": { "id": "breathe_white", "text": "Breathe White", "command": "breathe white" },
+    "breathe_blue": { "id": "breathe_blue", "text": "Breathe Blue", "command": "breathe blue" },
+    "breathe_purple": { "id": "breathe_purple", "text": "Breathe Purple", "command": "breathe purple" },
+    "breathe_yellow": { "id": "breathe_yellow", "text": "Breathe Yellow", "command": "breathe yellow" },
+    "blink_white": { "id": "blink_white", "text": "Blink White", "command": "blink white" },
+    "blink_blue": { "id": "blink_blue", "text": "Blink blue", "command": "blink blue" },
+    "blink_purple": { "id": "blink_purple", "text": "Blink purple", "command": "blink purple" },
+    "blink_yellow": { "id": "blink_yellow", "text": "Blink yellow", "command": "blink yellow" },
+    "all_off": { "id": "all_off", "text": "All Off", "command": "all_off" }
+}

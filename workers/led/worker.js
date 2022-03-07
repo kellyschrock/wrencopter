@@ -229,7 +229,7 @@ function toModeName(type, mode) {
 }
 
 function hasGpsFix() {
-    return (mVehicleState.fixType >= 3);
+    return (mVehicleState.fixType >= 2);
 }
 
 function fixStateName() {
@@ -266,11 +266,11 @@ function onMavlinkMessage(msg) {
 
     switch(msg.name) {
         case "GPS_RAW_INT": {
-            if(mVehicleState.fixType != msg.fix_type) {
+//            if(mVehicleState.fixType != msg.fix_type) {
                 mVehicleState.fixType = msg.fix_type;
 
                 // sendStateToLEDs();
-            }
+//            }
 
             break;
         }
@@ -330,9 +330,49 @@ function onGCSMessage(msg) {
         case "run_led": {
             return runLed(msg);
         }
+
+		case "list_modes": {
+			return listModes(msg);
+		}
+
+		case "led_command": {
+			return doLEDCommand(msg);
+		}
     }
 
     return result;
+}
+
+function doLEDCommand(msg) {
+	const result = { ok: true };
+
+	if(msg.command) {
+		shellCommand({ command: msg.command });
+	} else {
+		result.ok = false;
+		result.message = "No LED command specified";
+	}
+
+	return result;
+}
+
+function listModes(msg) {
+	const result = {
+		ok: true
+	};
+
+	let output = "\n";
+
+	Object.keys(mMenuItems).forEach((key) => {
+		const item = mMenuItems[key];
+		if(item) {
+			output += `${item.id}\t${item.text}\n`;
+		}
+	});
+
+	result.output = output;
+
+	return result;
 }
 
 function runLed(msg) {
