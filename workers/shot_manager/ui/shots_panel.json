@@ -1,0 +1,147 @@
+{
+    "id": "shots_panel",
+    "screen_id": "flight",
+    "on_back": {
+        "worker_id": "shot_manager",
+        "msg_id": "shots_panel_closed"
+    },
+    "layout": {
+        "type": "LinearLayout",
+        "layout_width": "match_parent",
+        "layout_height": "match_parent",
+        "orientation": "vertical",
+        "gravity": "center",
+        "padding": 40,
+        "background": "#88000000",
+        "children": [ 
+            {
+                "type": "LinearLayout",
+                "layout_width": "match_parent",
+                "layout_height": "match_parent",
+                "orientation": "vertical",
+                "padding": "12dip",
+                "background": "#dd000000",
+                "children": [
+                    {
+                        "type": "TextView",
+                        "id": "txt_title",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "text": "Smart Shots",
+                        "textColor": "white",
+                        "textStyle": "bold",
+                        "textSize": 20
+                    },
+                    {
+                        "type": "TextView",
+                        "id": "txt_subtitle",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "text": "Select a smart shot to run, and pick SELECT below.",
+                        "textColor": "white"
+                    },
+                    {
+                        "type": "View",
+                        "layout_width": "match_parent",
+                        "layout_height": 1,
+                        "layout_marginTop": "10dip",
+                        "layout_marginBottom": "10dip",
+                        "background": "#aaffffff"
+                    },
+                    {
+                        "type": "LinearLayout",
+                        "layout_width": "match_parent",
+                        "layout_height": 0,
+                        "layout_weight": 1,
+                        "orientation": "horizontal",
+                        "children": [
+                            {
+                                "type": "RecyclerView",
+                                "id": "rv_selected_shot",
+                                "name": "selected_shot",
+                                "layout_width": "0dip",
+                                "layout_height": "match_parent",
+                                "layout_weight": 0.2,
+                                "minWidth": "80",
+                                "minHeight": "60",
+                                "adapter": {
+                                    "item_style": {
+                                        "title": {
+                                            "textColor": "white",
+                                            "textStyle": "bold",
+                                            "textSize": "18"
+                                        },
+                                        "subtext": {
+                                            "textColor": "white",
+                                            "gravity": "left",
+                                            "visibility": "gone"
+                                        }
+                                    },
+                                    "items": [
+                                        {
+                                            "id": "item1",
+                                            "title": "Title 1",
+                                            "subtitle": "sub-title 1"
+                                        },
+                                        {
+                                            "id": "item2",
+                                            "title": "Title 2",
+                                            "subtitle": "sub-title 2"
+                                        }
+                                    ]
+                                },
+                                "on_item_selected": {
+                                    "worker_id": "shot_manager",
+                                    "msg_id": "shot_item_selected"
+                                }
+                            },
+                            {
+                                "type": "View",
+                                "layout_width": "1dip",
+                                "layout_height": "match_parent",
+                                "background": "#88ffffff"
+                            },
+                            {
+                                "type": "TextView",
+                                "id": "txt_shot_description",
+                                "layout_width": 0,
+                                "layout_height": "match_parent",
+                                "layout_weight": 0.8,
+                                "text": "Select a shot for details.",
+                                "textSize": 18,
+                                "padding": "8dip"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "LinearLayout",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "orientation": "horizontal",
+                        "children": [
+                            {
+                                "type": "Space",
+                                "layout_width": 0,
+                                "layout_height": 0,
+                                "layout_weight": 1
+                            },
+                            {
+                                "type": "Button",
+                                "id": "btn_select_shot",
+                                "name": "select_shot",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "text": "Select",
+                                "background": "@null",
+                                "on_click": {
+                                    "worker_id": "shot_manager",
+                                    "msg_id": "shot_selected"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

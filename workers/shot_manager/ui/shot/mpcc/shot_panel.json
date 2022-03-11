@@ -1,0 +1,202 @@
+{
+    "id": "mpcc_shot",
+    "screen_id": "flight",
+    "on_back": {
+        "worker_id": "shot_manager",
+        "msg_id": "mpcc_panel_closed"
+    },
+    "layout": {
+        "type": "LinearLayout",
+        "layout_width": "match_parent",
+        "layout_height": "match_parent",
+        "orientation": "vertical",
+        "gravity": "bottom",
+        "children": [
+            {
+                "type": "LinearLayout",
+                "layout_width": "match_parent",
+                "layout_height": 0,
+                "layout_weight": 1,
+                "gravity": "center",
+                "background": "#5500ff00",
+                "visibility": "gone",
+                "children": [
+                    {
+                        "type": "TextView",
+                        "layout_width": "wrap_content",
+                        "layout_height": "wrap_content",
+                        "text": "+",
+                        "textSize": 42,
+                        "shadow": { "radius": 8, "dx": 4, "dy": 4, "color": "black" }
+                    }
+                ]
+            },
+            {
+                "type": "LinearLayout",
+                "layout_width": "match_parent",
+                "layout_height": "wrap_content",
+                "layout_gravity": "bottom",
+                "orientation": "vertical",
+                "padding": 20,
+                "background": "#ee000000",
+                "children": [
+                    {
+                        "type": "TextView",
+                        "id": "txt_title",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "text": "Cable Cam",
+                        "textColor": "white",
+                        "textStyle": "bold",
+                        "textSize": 24
+                    },
+                    {
+                        "type": "TextView",
+                        "id": "txt_subtitle",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "text": "Fly to points and save locations by pressing \"Add Point\" at each location. Then press \"Done Adding Points\" to go to the next step.",
+                        "textColor": "white"
+                    },
+                    {
+                        "type": "LinearLayout",
+                        "id": "layout_add_points",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "orientation": "horizontal",
+                        "padding": 20,
+                        "children": [
+                            {
+                                "type": "Button",
+                                "id": "btn_add_point",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "layout_marginLeft": 20,
+                                "text": "Add Point",
+                                "textColor": "white",
+                                "minWidth": "60dip",
+                                "on_click": {
+                                    "worker_id": "shot_manager",
+                                    "msg_id": "mpcc_add_point"
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "id": "btn_add_points_done",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "layout_marginLeft": 20,
+                                "text": "Done adding Points",
+                                "textColor": "white",
+                                "minWidth": "60dip",
+                                "on_click": {
+                                    "worker_id": "shot_manager",
+                                    "msg_id": "mpcc_add_points_done"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "type": "LinearLayout",
+                        "id": "layout_run",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "orientation": "vertical",
+                        "visibility": "gone",
+                        "padding": 20,
+                        "children": [
+                            {
+                                "type": "LinearLayout",
+                                "id": "layout_mpcc_speed",
+                                "layout_width": "match_parent",
+                                "layout_height": "wrap_content",
+                                "orientation": "horizontal",
+                                "padding": 20,
+                                "children": [
+                                    {
+                                        "type": "TextView",
+                                        "layout_width": "wrap_content",
+                                        "layout_height": "wrap_content",
+                                        "layout_marginLeft": 20,
+                                        "text": "Speed:",
+                                        "textColor": "white",
+                                        "textStyle": "bold",
+                                        "minWidth": "60dip"
+                                    },
+                                    {
+                                        "type": "SeekBar",
+                                        "id": "seek_speed",
+                                        "name": "speed",
+                                        "layout_width": "0dip",
+                                        "layout_height": "wrap_content",
+                                        "layout_weight": 1,
+                                        "max": 10,
+                                        "progress": 2,
+                                        "on_progress": {
+                                            "worker_id": "shot_manager",
+                                            "msg_id": "mpcc_speed_updated"
+                                        }
+                                    },
+                                    {
+                                        "type": "TextView",
+                                        "id": "txt_speed",
+                                        "layout_width": "wrap_content",
+                                        "layout_height": "wrap_content",
+                                        "textColor": "white"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "LinearLayout",
+                                "layout_width": "match_parent",
+                                "layout_height": "wrap_content",
+                                "orientation": "horizontal",
+                                "gravity": "center_vertical|right",
+                                "children": [
+                                    {
+                                        "type": "Button",
+                                        "id": "btn_reverse",
+                                        "layout_width": "wrap_content",
+                                        "layout_height": "wrap_content",
+                                        "text": "REV",
+                                        "textColor": "#AA0000",
+                                        "background": "@null",
+                                        "on_click": {
+                                            "worker_id": "shot_manager",
+                                            "msg_id": "mpcc_go_reverse"
+                                        }
+                                    },
+                                    {
+                                        "type": "Button",
+                                        "id": "btn_pause",
+                                        "layout_width": "wrap_content",
+                                        "layout_height": "wrap_content",
+                                        "text": "Pause",
+                                        "background": "@null",
+                                        "on_click": {
+                                            "worker_id": "shot_manager",
+                                            "msg_id": "mpcc_go_pause"
+                                        }
+                                    },
+                                    {
+                                        "type": "Button",
+                                        "id": "btn_forward",
+                                        "layout_width": "wrap_content",
+                                        "layout_height": "wrap_content",
+                                        "text": "FWD",
+                                        "textColor": "#00AA00",
+                                        "background": "@null",
+                                        "on_click": {
+                                            "worker_id": "shot_manager",
+                                            "msg_id": "mpcc_go_forward"
+                                        }
+                                    }
+                                ]
+                            }                            
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

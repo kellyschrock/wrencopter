@@ -1,0 +1,115 @@
+{
+    "id": "zipline_shot",
+    "screen_id": "flight",
+    "on_back": {
+        "worker_id": "shot_manager",
+        "msg_id": "zipline_panel_closed"
+    },
+    "layout": {
+        "type": "LinearLayout",
+        "layout_width": "match_parent",
+        "layout_height": "match_parent",
+        "orientation": "vertical",
+        "gravity": "bottom",
+        "children": [
+            {
+                "type": "LinearLayout",
+                "layout_width": "match_parent",
+                "layout_height": "wrap_content",
+                "layout_gravity": "bottom",
+                "orientation": "vertical",
+                "padding": 20,
+                "background": "#ee000000",
+                "children": [
+                    {
+                        "type": "TextView",
+                        "id": "txt_title",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "text": "Zipline",
+                        "textColor": "white",
+                        "textStyle": "bold",
+                        "textSize": 24
+                    },
+                    {
+                        "type": "TextView",
+                        "id": "txt_subtitle",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "text": "Point the vehicle in the desired direction, set speed, and press Start.",
+                        "textColor": "white"
+                    },
+                    {
+                        "type": "LinearLayout",
+                        "id": "layout_speed",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "padding": "12dip",
+                        "orientation": "horizontal",
+                        "gravity": "center_vertical",
+                        "children": [
+                            {
+                                "type": "TextView",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "layout_marginLeft": 20,
+                                "text": "Speed:",
+                                "textColor": "white",
+                                "textStyle": "bold",
+                                "minWidth": "60dip"
+                            },
+                            {
+                                "type": "SeekBar",
+                                "id": "seek_speed",
+                                "name": "speed",
+                                "layout_width": "0dip",
+                                "layout_height": "wrap_content",
+                                "layout_weight": 1,
+                                "max": 12,
+                                "progress": 2,
+                                "on_progress": {
+                                    "worker_id": "shot_manager",
+                                    "msg_id": "zipline_speed_updated"
+                                }
+                            },
+                            {
+                                "type": "TextView",
+                                "id": "txt_speed",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "textColor": "white"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "LinearLayout",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "orientation": "horizontal",
+                        "children": [
+                            {
+                                "type": "View",
+                                "layout_width": "0dip",
+                                "layout_height": "1dip",
+                                "layout_weight": 1
+                            },
+                            {
+                                "type": "Button",
+                                "id": "shot_select",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "text": "Start",
+                                "textColor": "green",
+                                "background": "@null",
+                                "on_click": {
+                                    "worker_id": "shot_manager",
+                                    "msg_id": "zipline_start_shot"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
