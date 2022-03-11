@@ -1,0 +1,222 @@
+{
+    "id": "orbit_shot",
+    "screen_id": "flight",
+    "on_back": {
+        "worker_id": "shot_manager",
+        "msg_id": "shot_panel_closed"
+    },
+    "layout": {
+        "type": "LinearLayout",
+        "layout_width": "match_parent",
+        "layout_height": "match_parent",
+        "orientation": "vertical",
+        "gravity": "bottom",
+        "children": [
+            {
+                "type": "LinearLayout",
+                "layout_width": "match_parent",
+                "layout_height": 0,
+                "layout_weight": 1,
+                "gravity": "center",
+                "background": "#0500ff00",
+                "children": [
+                    {
+                        "type": "TextView",
+                        "layout_width": "wrap_content",
+                        "layout_height": "wrap_content",
+                        "text": "+",
+                        "textSize": 42,
+                        "shadow": { "radius": 8, "dx": 4, "dy": 4, "color": "black" }
+                    }
+                ]
+            },
+            {
+                "type": "LinearLayout",
+                "layout_width": "match_parent",
+                "layout_height": "wrap_content",
+                "layout_gravity": "bottom",
+                "orientation": "vertical",
+                "padding": 20,
+                "background": "#ee000000",
+                "children": [
+                    {
+                        "type": "TextView",
+                        "id": "txt_title",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "text": "Orbit",
+                        "textColor": "white",
+                        "textStyle": "bold",
+                        "textSize": 24
+                    },
+                    {
+                        "type": "TextView",
+                        "id": "txt_subtitle",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "text": "Set the radius and speed, and press START. Then press FWD or REV to orbit.",
+                        "textColor": "white"
+                    },
+                    {
+                        "type": "LinearLayout",
+                        "id": "layout_radius",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "padding": "12dip",
+                        "orientation": "horizontal",
+                        "gravity": "center_vertical",
+                        "children": [
+                            {
+                                "type": "TextView",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "layout_marginLeft": 20,
+                                "text": "Radius:",
+                                "textColor": "white",
+                                "textStyle": "bold",
+                                "minWidth": "60dip"
+                            },
+                            {
+                                "type": "SeekBar",
+                                "id": "seek_radius",
+                                "name": "radius",
+                                "layout_width": "0dip",
+                                "layout_height": "wrap_content",
+                                "layout_weight": 1,
+                                "max": 80,
+                                "progress": 20,
+                                "on_progress": {
+                                    "worker_id": "shot_manager",
+                                    "msg_id": "orbit_radius_updated"
+                                }
+                            },
+                            {
+                                "type": "TextView",
+                                "id": "txt_radius",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "textColor": "white"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "LinearLayout",
+                        "id": "layout_speed",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "padding": "12dip",
+                        "orientation": "horizontal",
+                        "gravity": "center_vertical",
+                        "children": [
+                            {
+                                "type": "TextView",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "layout_marginLeft": 20,
+                                "text": "Speed:",
+                                "textColor": "white",
+                                "textStyle": "bold",
+                                "minWidth": "60dip"
+                            },
+                            {
+                                "type": "SeekBar",
+                                "id": "seek_speed",
+                                "name": "speed",
+                                "layout_width": "0dip",
+                                "layout_height": "wrap_content",
+                                "layout_weight": 1,
+                                "max": 10,
+                                "progress": 2,
+                                "on_progress": {
+                                    "worker_id": "shot_manager",
+                                    "msg_id": "orbit_speed_updated"
+                                }
+                            },
+                            {
+                                "type": "TextView",
+                                "id": "txt_speed",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "textColor": "white"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "LinearLayout",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "orientation": "horizontal",
+                        "gravity": "center_vertical|right",
+                        "children": [
+                            {
+                                "type": "Button",
+                                "id": "btn_reverse",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "text": "REV",
+                                "textColor": "#AA0000",
+                                "background": "@null",
+                                "on_click": {
+                                    "worker_id": "shot_manager",
+                                    "msg_id": "orbit_go_reverse"
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "id": "btn_pause",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "text": "Pause",
+                                "background": "@null",
+                                "on_click": {
+                                    "worker_id": "shot_manager",
+                                    "msg_id": "orbit_go_pause"
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "id": "btn_forward",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "text": "FWD",
+                                "textColor": "#00AA00",
+                                "background": "@null",
+                                "on_click": {
+                                    "worker_id": "shot_manager",
+                                    "msg_id": "orbit_go_forward"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "type": "LinearLayout",
+                        "layout_width": "match_parent",
+                        "layout_height": "wrap_content",
+                        "orientation": "horizontal",
+                        "children": [
+                            {
+                                "type": "View",
+                                "layout_width": "0dip",
+                                "layout_height": "1dip",
+                                "layout_weight": 1
+                            },
+                            {
+                                "type": "Button",
+                                "id": "shot_select",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "text": "Start",
+                                "textColor": "green",
+                                "background": "@null",
+                                "on_click": {
+                                    "worker_id": "shot_manager",
+                                    "msg_id": "orbit_start_shot"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
