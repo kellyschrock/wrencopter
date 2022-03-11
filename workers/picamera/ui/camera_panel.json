@@ -38,13 +38,13 @@
       {
         "type": "ImageButton",
         "id": "take_picture",
-        "layout_width": 180,
-        "layout_height": 180,
+        "layout_width": 120,
+        "layout_height": 120,
         "background": "@null",
-        "icon": "$(img)/camera/shutter.png",
+        "icon": "$(img)/picamera/shutter.png",
         "scaleType": "fitCenter",
         "on_click": {
-          "worker_id": "camera",
+          "worker_id": "picamera",
           "msg_id": "take_picture"
         }
       },
@@ -69,13 +69,13 @@
       {
         "type": "ImageButton",
         "id": "btn_video",
-        "layout_width": 180,
-        "layout_height": 180,
+        "layout_width": 120,
+        "layout_height": 120,
         "background": "@null",
         "scaleType": "fitCenter",
-        "icon": "$(img)/camera/record_off.png",
+        "icon": "$(img)/picamera/record_off.png",
         "on_click": {
-          "worker_id": "camera",
+          "worker_id": "picamera",
           "msg_id": "toggle_video"
         }
       },
@@ -99,7 +99,7 @@
           {"id": "120", "text": "120 fps"}
         ],
         "on_item_selected": {
-          "worker_id": "camera",
+          "worker_id": "picamera",
           "msg_id": "set_frame_rate"
         }
       },
@@ -112,10 +112,10 @@
           "minWidth": "34dip",
           "minHeight": "34dip",
           "scaleType": "fitXY",
-          "icon": "$(img)/camera/ic_settings.png",
-          "background": "#33ffffff",
+          "icon": "$(img)/picamera/ic_settings.png",
+          "background": "#00ffffff",
           "on_click": {
-              "worker_id": "camera", "msg_id": "open_settings"
+              "worker_id": "picamera", "msg_id": "open_settings"
           }
       },
       {
@@ -139,9 +139,9 @@
             "id": "btn_evcomp_sub",
             "layout_width": 50,
             "layout_height": 50,
-            "icon": "$(img)/camera/subtract_white.png",
+            "icon": "$(img)/picamera/subtract_white.png",
             "on_click": {
-              "worker_id": "camera", "msg_id": "evcomp_down"
+              "worker_id": "picamera", "msg_id": "evcomp_down"
             }
           },
           {
@@ -159,9 +159,9 @@
             "id": "btn_evcomp_add",
             "layout_width": 50,
             "layout_height": 50,
-            "icon": "$(img)/camera/add_white.png",
+            "icon": "$(img)/picamera/add_white.png",
             "on_click": {
-              "worker_id": "camera",
+              "worker_id": "picamera",
               "msg_id": "evcomp_up"
             }
           }

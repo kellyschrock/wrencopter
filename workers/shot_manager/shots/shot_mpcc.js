@@ -9,6 +9,9 @@ const DIR_REV = 2;
 const MODE_POINTS = 1;
 const MODE_RUN = 2;
 
+// Distance between generated run points. Make this shorter for more points and smoother movement.
+const RUN_POINT_DIST = 1; // m
+
 let ATTRS;
 let Vehicle;
 let WorkerUI;
@@ -21,9 +24,9 @@ let mListener;
 
 let mVehicleLocation;
 let mShotRunning = false;
+let mMinTargetDistance = RUN_POINT_DIST * 2;
 
 const mShotParams = {
-    radius: 20,
     speed: 2
 };
 
@@ -34,7 +37,7 @@ let mRunMode = MODE_POINTS;
 // Points saved by the user while building the shot
 const mSavedPoints = [];
 // Points generated when "Done" is clicked
-const mGeneratedPoints = [];
+const mRunPoints = [];
 let mPathIndex = 0;
 let mTargetPoint = null;
 
@@ -100,6 +103,11 @@ function onGCSMessage(msg) {
 
             mListener.onShotPanelClosed();
 
+            break;
+        }
+
+        case "mpcc_test_run": {
+            doTestRun();
             break;
         }
 
@@ -203,11 +211,30 @@ function startShot(params) {
         return onShotError("No vehicle position");
     }
 
-    generateRunPoints();
+    // mSavedPoints is populated now, so fill mRunPoints
+    doGenerateRunPoints();
+}
+
+function doTestRun() {
+    const savedPoints = [
+        { where: { lat: 38.61942391567368, lng: -94.40092639136456, alt: 10 }, heading: 0, gimbal: 0 }
+        , { where: { lat: 38.61959098417756, lng: -94.40045120957413, alt: 14 }, heading: 90, gimbal: 0 }
+        , { where: { lat: 38.61940535248223, lng: -94.3999285096037, alt: 11 }, heading: 45, gimbal: 0 }
+        , { where: { lat: 38.619164030560654, lng: -94.4004036913948, alt: 20 }, heading: 180, gimbal: 0 }
+    ];
+
+    mSavedPoints.splice(0, mSavedPoints.length);
+    for(const p of savedPoints) {
+        mSavedPoints.push(p);
+    }
+
+    startShot(mShotParams);
+    setRunMode(MODE_RUN);
+    onEnteredGuidedMode({});
 }
 
 function addSavePoint(msg) {
-    d(`updateSavePoint(${JSON.stringify(msg)})`);
+    d(`addSavePoint(${JSON.stringify(msg)})`);
 
     if(!mVehicleLocation) return d(`No vehicle location!`);
 
@@ -215,7 +242,6 @@ function addSavePoint(msg) {
     const point = {
         where: mVehicleLocation,
         heading: heading,
-        time: Date.now(),
         gimbal: getGimbalAngle()
     };
 
@@ -226,7 +252,7 @@ function addSavePoint(msg) {
 function updateRunSpeed(msg) {
     d(`updateRunSpeed()`);
 
-    mShotParams.speed = msg.speed;
+    mShotParams.speed = msg.speed || 1;
 
     mListener.sendGCSMessage({
         id: "screen_update",
@@ -239,29 +265,94 @@ function updateRunSpeed(msg) {
         }
     });
 
-    // TODO: Also adjust the timer
-    if (mShotRunning) {
+    if (mTargetPoint) {
         Vehicle.setSpeed(getShotSpeed());
     }
 }
 
-function generateRunPoints() {
-    if(mSavedPoints.length == 0) {
+function doGenerateRunPoints() {
+    const genPoints = generateRunPoints(mSavedPoints);
+    for(const point of genPoints) {
+        mRunPoints.push(point);
+    }
+
+    d(`doGenerateRunPoints(): ${mRunPoints.length} points`);
+}
+
+function generateRunPoints(savedPoints) {
+    if(savedPoints.length == 0) {
         d(`generateRunPoints(): No saved points`);
         return false;
     }
 
-    // TODO: Just testing BS for now.
-    // Ultimately will be a large set of interpolated points run through by a timer like ROIEstimator.
-    for(const point of mSavedPoints) {
-        mGeneratedPoints.push({
-            lat: point.where.lat,
-            lng: point.where.lng,
-            alt: point.where.alt,
-            yaw: point.heading,
-            gimbal: point.gimbal
-        });
+    const output = [];
+
+    for(let i = 0, size = savedPoints.length; i < size; ++i) {
+        const point = savedPoints[i];
+        const next = savedPoints[i + 1];
+        const here = point.where;
+        const there = next && next.where;
+
+        if(there) {
+            // Point from here to there.
+            const heading = MathUtils.getHeadingFromCoordinates(here, there);
+            // How far from here to there.
+            const totalDistance = MathUtils.getDistance3D(here, there);
+            
+            const stepCount = (totalDistance / RUN_POINT_DIST);
+
+            // Altitude
+            const altDiff = (there.alt - here.alt);
+            // How much alt change in each step
+            const altStep = (altDiff / stepCount);
+
+            // Yaw
+            const yawDiff = (next.heading - point.heading);
+            const yawStep = (yawDiff / stepCount);
+
+            // Gimbal
+            const gimbalDiff = (next.gimbal - point.gimbal);
+            const gimbalStep = (gimbalDiff / stepCount);
+
+            // Generate a list of points between here/there at RUN_POINT_DIST.
+            let startPoint = here;
+            let dist = RUN_POINT_DIST;
+            let currAlt = here.alt;
+            let currYaw = point.heading;
+            let currGimbal = point.gimbal;
+
+            while(dist < totalDistance) {
+                const pt = MathUtils.newCoordFromBearingAndDistance(startPoint, heading, RUN_POINT_DIST);
+                currAlt += altStep;
+                currYaw += yawStep;
+                currGimbal = gimbalStep;
+
+                const gen = {
+                    lat: pt.lat,
+                    lng: pt.lng,
+                    alt: currAlt,
+                    yaw: currYaw,
+                    gimbal: currGimbal
+                };
+
+                output.push(gen);
+
+                dist += RUN_POINT_DIST;
+                startPoint = pt;
+            }
+        } else {
+            // "here" is the last point. Everything's been filled up to here, so just make the final point in the list.
+            output.push({
+                lat: here.lat,
+                lng: here.lng,
+                alt: here.alt,
+                yaw: point.heading,
+                gimbal: point.gimbal
+            });
+        }
     }
+
+    return output;
 }
 
 function setRunMode(mode) {
@@ -275,7 +366,7 @@ function setRunMode(mode) {
                     screen_id: "flight",
                     panel_id: "mpcc_shot",
                     values: {
-                        layout_points: { visibility: "visible" },
+                        layout_add_points: { visibility: "visible" },
                         layout_run: { visibility: "gone" }
                     }
                 });
@@ -289,7 +380,7 @@ function setRunMode(mode) {
                     screen_id: "flight",
                     panel_id: "mpcc_shot",
                     values: {
-                        layout_points: { visibility: "gone" },
+                        layout_add_points: { visibility: "gone" },
                         layout_run: { visibility: "visible" }
                     }
                 });
@@ -328,8 +419,9 @@ function stopShot() {
     if(mShotRunning) {
         mListener.onShotStopped(SHOT_ID);
         mShotRunning = false;
-        mTargetPoint = null;
     }
+
+    mTargetPoint = null;
 }
 
 function isRunning() {
@@ -345,31 +437,33 @@ function onVehicleMoved(where) {
 
     mVehicleLocation = where;
 
-    // TODO: If actually running the shot:
+    if(!mShotRunning) return;
 
-    // if(mTargetPoint != null) {
-    //     const distToTarget = MathUtils.getDistance2D(mVehicleLocation, mTargetPoint);
-    //     // d(`distToTarget=${distToTarget}`);
+    // If actually running the shot:
+    if(mTargetPoint != null) {
+        const distToTarget = MathUtils.getDistance2D(mVehicleLocation, mTargetPoint);
+        // d(`distToTarget=${distToTarget}`);
 
-    //     if (isValidDistance(distToTarget)) {
-    //         // If we've gotten near the target point, go to the next one.
-    //         // Keep doing this until the user hits stop or changes modes.
-    //         if (distToTarget <= (mMinTargetDistance * (getShotSpeed()))) {
-    //             headToNextLocation();
-    //         }
-    //     } else {
-    //         d(`Invalid distance ${distToTarget}`);
-    //     }
-    // }
+        // This probably won't apply in MPCC, since we're moving a tiny distance at a time according to a fast timer.
+        if (isValidDistance(distToTarget)) {
+            // If we've gotten near the target point, go to the next one.
+            // Keep doing this until the user hits stop or changes modes.
+            if (distToTarget <= (mMinTargetDistance * (getShotSpeed()))) {
+                headToNextLocation();
+            }
+        } else {
+            d(`Invalid distance ${distToTarget}`);
+        }
+    }
 }
 
 function onPanelOpened(body) {
     d(`onPanelOpened()`);
 
-    // TODO: It's saying this twice for some reason.
+    // TODO: It's saying this twice for some reason. FIX.
     // mListener.onShotMessage(SHOT_ID, "Fly to points and save locations by pressing Add Point at each location. Then press Done Adding Points to go to the next step.");
     mSavedPoints.splice(0, mSavedPoints.length);
-    mGeneratedPoints.splice(0, mGeneratedPoints.length);
+    mRunPoints.splice(0, mRunPoints.length);
 }
 
 function isValidDistance(dist) {
@@ -408,32 +502,38 @@ function headToNextLocation() {
         // Do yaw
         Vehicle.setYaw(mTargetPoint.yaw);
         // TODO: Do gimbal angle too
+    } else {
+        mListener.onShotMessage(SHOT_ID, (mDirection == DIR_NONE) ? "Paused" : "Path complete");
     }
 }
 
 function getShotSpeed() {
-    let speed = Math.min(mShotParams.speed || 2, maxStrafeSpeed(mShotParams.radius));
+    let speed = mShotParams.speed || 2;
     if(isNaN(speed)) speed = 1;
     return speed;
 }
 
 function nextLocation() {
-    if(mGeneratedPoints.length == 0) return null;
+    if(mRunPoints.length == 0) return null;
 
     let result = null;
 
     switch(mDirection) {
         case DIR_FWD: {
-            if(mPathIndex < mGeneratedPoints.length) {
-                result = mGeneratedPoints[mPathIndex++];
+            if(mPathIndex < mRunPoints.length) {
+                result = mRunPoints[mPathIndex++];
             }
             
             break;
         }
 
         case DIR_REV: {
+            if(mPathIndex >= mRunPoints.length) {
+                --mPathIndex;
+            }
+
             if(mPathIndex > 0) {
-                result = mGeneratedPoints[mPathIndex--];
+                result = mRunPoints[mPathIndex--];
             }
 
             break;
@@ -477,8 +577,27 @@ exports.onPanelOpened = onPanelOpened;
 
 function doTest() {
     d(`doTest()`);
+
+    if(!MathUtils) {
+        MathUtils = require("../lib/MathUtils");
+    }
+
+    const savedPoints = [
+        { where: { lat: 38.61942391567368, lng: -94.40092639136456, alt: 10 }, heading: 0, gimbal: 0 }
+    ,   { where: { lat: 38.61959098417756, lng: -94.40045120957413, alt: 14 }, heading: 90, gimbal: 0 }
+    ,   { where: { lat: 38.61940535248223, lng: -94.3999285096037, alt: 11 }, heading: 45, gimbal: 0 }
+    ,   { where: { lat: 38.619164030560654, lng: -94.4004036913948, alt: 20 }, heading: 180, gimbal: 0 }
+    ];
+
+    const genPoints = generateRunPoints(savedPoints);
+
+    for(const p of genPoints) {
+        d(`yaw=${p.yaw}`);
+    }
+
+    // d(`genPoints=${JSON.stringify(genPoints)}`);
 }
 
-if(process.mainModule) {
+if(process.mainModule == module) {
     doTest();
 }

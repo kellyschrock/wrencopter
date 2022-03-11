@@ -93,6 +93,20 @@
                                     "worker_id": "shot_manager",
                                     "msg_id": "mpcc_add_points_done"
                                 }
+                            },
+                            {
+                                "type": "Button",
+                                "id": "btn_test_run",
+                                "layout_width": "wrap_content",
+                                "layout_height": "wrap_content",
+                                "layout_marginLeft": 20,
+                                "text": "Test run",
+                                "textColor": "green",
+                                "minWidth": "60dip",
+                                "on_click": {
+                                    "worker_id": "shot_manager",
+                                    "msg_id": "mpcc_test_run"
+                                }
                             }
                         ]
                     },
