@@ -162,6 +162,10 @@ const mShotListener = {
     onShotMessage: function(shotId, str) {
         d(`onShotMessage(): ${shotId}: ${str}`);
         say(str);
+    },
+
+    onSendScreen: function(shotId, pathname) {
+        d(`onSendScreen(${shotId}, ${pathname})`);
     }
 };
 
@@ -278,6 +282,7 @@ function onGCSMessage(msg) {
         }
 
         default: {
+            // Pass the unknown message to the shot to see if it knows what to do with it.
             result.ok = false;
             result.message = `No message with id ${msg.id}`;
 
@@ -337,6 +342,10 @@ function openShotUI(msg) {
     if(body) {
         if(shot.initShotPanel) {
             body = shot.initShotPanel(body);
+        }
+
+        if(shot.onPanelOpened) {
+            shot.onPanelOpened(body);
         }
 
         // say("Send full screen message");
