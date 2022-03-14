@@ -11,6 +11,10 @@ const CFG_FIFO = "/tmp/cam_config.fifo";
 var mRecordingVideo = false;
 var mEvComp = 0.0;
 let mBrightness = 50;
+let mFocus = 0; // far focus
+const MIN_FOCUS = 0;
+const MAX_FOCUS = 1023;
+const FOCUS_STEP = 50
 
 let cmdWriteStream = null;
 let cfgWriteStream = null;
@@ -190,6 +194,28 @@ exports.brightness = function() { return mBrightness; }
 exports.doVFlip = function(doit) {
     sendFifoConfig(`vflip ${doit? "true": "false"}`);
 };
+
+exports.focusUp = function() {
+    mFocus += FOCUS_STEP;
+    if(mFocus > MAX_FOCUS) {
+        mFocus = MAX_FOCUS;
+    }
+
+    sendFifoConfig(`focus ${mFocus}`);
+}
+
+exports.focusDown = function() {
+    mFocus -= FOCUS_STEP;
+    if(mFocus < MIN_FOCUS) {
+        mFocus = MIN_FOCUS;
+    }
+
+    sendFifoConfig(`focus ${mFocus}`);
+}
+
+exports.focus = function() { 
+    return `${((mFocus / MAX_FOCUS) * 100).toFixed(0)}%`; 
+}
 
 exports.init = init;
 exports.close = close;

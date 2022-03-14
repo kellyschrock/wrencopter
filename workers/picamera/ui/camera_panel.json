@@ -200,12 +200,62 @@
         ]
       },
       {
+        "type": "TextView",
+        "layout_width": "match_parent",
+        "layout_height": "wrap_content",
+        "layout_marginTop": 30,
+        "text": "Focus",
+        "gravity": "center"
+      },
+      {
+        "type": "LinearLayout",
+        "layout_width": "match_parent",
+        "layout_height": "wrap_content",
+        "layout_marginTop": 18,
+        "orientation": "horizontal",
+        "gravity": "center",
+        "children": [
+          {
+            "type": "ImageButton",
+            "id": "btn_focus_down",
+            "layout_width": 50,
+            "layout_height": 50,
+            "icon": "$(img)/picamera/subtract_white.png",
+            "on_click": {
+              "worker_id": "picamera", "msg_id": "focus_down"
+            }
+          },
+          {
+            "type": "TextView",
+            "id": "txt_focus",
+            "layout_width": "wrap_content",
+            "layout_height": "wrap_content",
+            "text": "0",
+            "gravity": "center",
+            "paddingLeft": 12,
+            "paddingRight": 12
+          },
+          {
+            "type": "ImageButton",
+            "id": "btn_focus_up",
+            "layout_width": 50,
+            "layout_height": 50,
+            "icon": "$(img)/picamera/add_white.png",
+            "on_click": {
+              "worker_id": "picamera",
+              "msg_id": "focus_up"
+            }
+          }
+        ]
+      },
+      {
         "type": "CheckBox",
         "id": "chk_vflip",
         "name": "vflip",
         "layout_width": "match_parent",
         "layout_height": "wrap_content",
         "layout_marginTop": 18,
+        "visibility": "gone",
         "text": "V-Flip",
         "on_check": {
           "worker_id": "picamera",

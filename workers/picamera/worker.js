@@ -282,6 +282,18 @@ function onGCSMessage(msg) {
             break;
         }
 
+        case "focus_up": {
+            camera.focusUp();
+            sendFocusUpdate(camera.focus());
+            break;
+        }
+
+        case "focus_down": {
+            camera.focusDown();
+            sendFocusUpdate(camera.focus());
+            break;
+        }
+
         case "do_vflip": {
             camera.doVFlip(msg.checked);
             break;
@@ -338,6 +350,19 @@ function sendBrightnessUpdate(brightness) {
         values: {
             txt_brightness: {
                 text: `${brightness}`
+            }
+        }
+    });
+}
+
+function sendFocusUpdate(focus) {
+    ATTRS.sendGCSMessage(ATTRS.id, {
+        id: "screen_update",
+        screen_id: "flight",
+        panel_id: "camera_panel",
+        values: {
+            txt_focus: {
+                text: `${focus}`
             }
         }
     });
