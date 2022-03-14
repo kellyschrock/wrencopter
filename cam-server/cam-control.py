@@ -85,6 +85,8 @@ def handleConfigInput(str):
 		camera.meter_mode = str[11:]
 	elif str.startswith("awb"):
 		camera.awb_mode = str[4:]
+	elif str.startswith("iso"):
+		camera.iso = int(str[4:])
 	elif str.startswith("drc"): # off, low, medium, high
 		camera.drc_strength = str[4:]
 	elif str.startswith("hflip"):

@@ -83,24 +83,55 @@
         "type": "TextView",
         "layout_width": "match_parent",
         "layout_height": "wrap_content",
-        "text": "Frame rate",
+        "text": "White Balance",
         "gravity": "center"
       },
       {
         "type": "Spinner",
         "layout_width": "match_parent",
         "layout_height": "wrap_content",
-        "id": "spin_frame_rate",
-        "name": "frame_rate",
+        "id": "spin_awb",
+        "name": "awb",
         "items": [
-          {"id": "20", "text": "20 fps"},
-          {"id": "30", "text": "30 fps"},
-          {"id": "60", "text": "60 fps"},
-          {"id": "120", "text": "120 fps"}
+          {"id": "auto", "text": "auto"},
+          {"id": "sunlight", "text": "sunlight"},
+          {"id": "cloudy", "text": "cloudy"},
+          {"id": "shade", "text": "shade"},
+          {"id": "tungsten", "text": "tungsten"},
+          {"id": "fluorescent", "text": "fluorescent"},
+          {"id": "incandescent", "text": "incandescent"},
+          {"id": "flash", "text": "flash"},
+          {"id": "horizon", "text": "horizon"}
         ],
         "on_item_selected": {
           "worker_id": "picamera",
-          "msg_id": "set_frame_rate"
+          "msg_id": "set_awb"
+        }
+      },
+      {
+        "type": "TextView",
+        "layout_width": "match_parent",
+        "layout_height": "wrap_content",
+        "layout_marginTop": 20,
+        "text": "ISO",
+        "gravity": "center"
+      },
+      {
+        "type": "Spinner",
+        "layout_width": "match_parent",
+        "layout_height": "wrap_content",
+        "id": "spin_iso",
+        "name": "iso",
+        "items": [
+          {"id": "0", "text": "Auto"},
+          {"id": "100", "text": "100"},
+          {"id": "200", "text": "200"},
+          {"id": "400", "text": "400"},
+          {"id": "800", "text": "800"}
+        ],
+        "on_item_selected": {
+          "worker_id": "picamera",
+          "msg_id": "set_iso"
         }
       },
       {
@@ -114,6 +145,7 @@
           "scaleType": "fitXY",
           "icon": "$(img)/picamera/ic_settings.png",
           "background": "#00ffffff",
+          "visibility": "gone",
           "on_click": {
               "worker_id": "picamera", "msg_id": "open_settings"
           }
@@ -123,7 +155,7 @@
         "layout_width": "match_parent",
         "layout_height": "wrap_content",
         "layout_marginTop": 30,
-        "text": "EV Comp",
+        "text": "Brightness",
         "gravity": "center"
       },
       {
@@ -136,36 +168,49 @@
         "children": [
           {
             "type": "ImageButton",
-            "id": "btn_evcomp_sub",
+            "id": "btn_brightness_down",
             "layout_width": 50,
             "layout_height": 50,
             "icon": "$(img)/picamera/subtract_white.png",
             "on_click": {
-              "worker_id": "picamera", "msg_id": "evcomp_down"
+              "worker_id": "picamera", "msg_id": "brightness_down"
             }
           },
           {
             "type": "TextView",
-            "id": "txt_evcomp",
+            "id": "txt_brightness",
             "layout_width": "wrap_content",
             "layout_height": "wrap_content",
-            "text": "1.00",
+            "text": "50",
             "gravity": "center",
             "paddingLeft": 12,
             "paddingRight": 12
           },
           {
             "type": "ImageButton",
-            "id": "btn_evcomp_add",
+            "id": "btn_brightness_up",
             "layout_width": 50,
             "layout_height": 50,
             "icon": "$(img)/picamera/add_white.png",
             "on_click": {
               "worker_id": "picamera",
-              "msg_id": "evcomp_up"
+              "msg_id": "brightness_up"
             }
           }
         ]
+      },
+      {
+        "type": "CheckBox",
+        "id": "chk_vflip",
+        "name": "vflip",
+        "layout_width": "match_parent",
+        "layout_height": "wrap_content",
+        "layout_marginTop": 18,
+        "text": "V-Flip",
+        "on_check": {
+          "worker_id": "picamera",
+          "msg_id": "do_vflip"
+        }
       }
     ]
 }

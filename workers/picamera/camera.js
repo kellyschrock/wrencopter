@@ -10,6 +10,7 @@ const CFG_FIFO = "/tmp/cam_config.fifo";
 //
 var mRecordingVideo = false;
 var mEvComp = 0.0;
+let mBrightness = 50;
 
 let cmdWriteStream = null;
 let cfgWriteStream = null;
@@ -154,6 +155,41 @@ function decrementEVComp(cb) {
 function doConfig(prop, value) {
     sendFifoConfig(`${prop}=${value}`);
 }
+
+exports.setAwb = function(value) {
+    const awb = value && value.awb;
+    if(awb && awb.id) {
+        sendFifoConfig(`awb ${awb.id}`);
+    }
+}
+
+exports.setISO = function(value) {
+    d(`setISO(): value=${JSON.stringify(value)}`);
+
+    const iso = value && value.iso;
+    if(iso && iso.id) {
+        d(`Send ${iso.id} to the fifo, DIPSHIT`);
+        sendFifoCommand(`iso ${iso.id}`);
+    }
+}
+
+exports.brightnessUp = function () {
+    if (mBrightness < 100) {
+        sendFifoConfig(`brightness ${++mBrightness}`);
+    }
+};
+
+exports.brightnessDown = function() {
+    if(mBrightness > 10) {
+        sendFifoConfig(`brightness ${--mBrightness}`);
+    }
+};
+
+exports.brightness = function() { return mBrightness; }
+
+exports.doVFlip = function(doit) {
+    sendFifoConfig(`vflip ${doit? "true": "false"}`);
+};
 
 exports.init = init;
 exports.close = close;

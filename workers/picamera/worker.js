@@ -250,6 +250,16 @@ function onGCSMessage(msg) {
             break;
         }
 
+        case "set_awb": {
+            camera.setAwb(msg);
+            break;
+        }
+
+        case "set_iso": {
+            camera.setISO(msg);
+            break;
+        }
+
         case "open_settings": {
             sendSettingsDialogMessage();
             break;
@@ -257,6 +267,23 @@ function onGCSMessage(msg) {
 
         case "set_config": {
             camera.doConfig(msg.prop, msg.value);
+            break;
+        }
+
+        case "brightness_up": {
+            camera.brightnessUp();
+            sendBrightnessUpdate(camera.brightness());
+            break;
+        }
+
+        case "brightness_down": {
+            camera.brightnessDown();
+            sendBrightnessUpdate(camera.brightness());
+            break;
+        }
+
+        case "do_vflip": {
+            camera.doVFlip(msg.checked);
             break;
         }
 
@@ -301,6 +328,19 @@ function onImageDownload(name) {
 
 function sendCameraError(str) {
     api.WorkerUI.sendSpeechMessage(ATTRS, str, api.WorkerUI.SpeechType.ERROR);
+}
+
+function sendBrightnessUpdate(brightness) {
+    ATTRS.sendGCSMessage(ATTRS.id, {
+        id: "screen_update",
+        screen_id: "flight",
+        panel_id: "camera_panel",
+        values: {
+            txt_brightness: {
+                text: `${brightness}`
+            }
+        }
+    });
 }
 
 function sendUpdateRecordingStatus(recording) {
