@@ -155,6 +155,8 @@ function onGCSMessage(msg) {
                     result.ok = false;
                     result.message = err.message;
                     sendCameraError(err.message);
+                } else {
+                    sendPhotoConfirmation();
                 }
             });
             break;
@@ -340,6 +342,10 @@ function onImageDownload(name) {
 
 function sendCameraError(str) {
     api.WorkerUI.sendSpeechMessage(ATTRS, str, api.WorkerUI.SpeechType.ERROR);
+}
+
+function sendPhotoConfirmation() {
+    ATTRS.api.WorkerUI.sendSpeechMessage(ATTRS, "Photo", ATTRS.api.WorkerUI.SpeechType.TEXT);
 }
 
 function sendBrightnessUpdate(brightness) {
