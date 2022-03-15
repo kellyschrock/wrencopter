@@ -1,0 +1,48 @@
+{
+    "type": "LinearLayout",
+    "layout_width": "match_parent",
+    "layout_height": "wrap_content",
+    "orientation": "vertical",
+    "gravity": "center",
+    "background": "#88000000",
+    "children": [
+        {
+            "type": "TextView",
+            "layout_width": "match_parent",
+            "layout_height": "wrap_content",
+            "padding": 10,
+            "background": "black",
+            "textColor": "white",
+            "gravity": "center",
+            "text": "CC"
+        },
+        {
+            "type": "Button",
+            "id": "btn_poweroff",
+            "layout_width": "match_parent",
+            "layout_height": "wrap_content",
+            "text": "Shut down",
+            "textColor": "#aaffffff",
+            "textAllCaps": false,
+            "background": "black",
+            "on_click": {
+                "worker_id": "poweroff",
+                "msg_id": "power_off"
+            }
+        },
+        {
+            "type": "Button",
+            "id": "btn_reboot",
+            "layout_width": "match_parent",
+            "layout_height": "wrap_content",
+            "text": "Reboot",
+            "textColor": "#aaffffff",
+            "textAllCaps": false,
+            "background": "black",
+            "on_click": {
+                "worker_id": "poweroff",
+                "msg_id": "reboot"
+            }
+        }
+    ]
+}

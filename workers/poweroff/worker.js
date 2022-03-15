@@ -107,7 +107,6 @@ function onScreenEnter(screen, type) {
         case "html": {
             switch(screen) {
                 case ATTRS.api.WorkerUI.Const.SCREEN_START: {
-                    // const body = loadHTMLLayoutFor(ATTRS.api.WorkerUI.Const.PANEL_WORKER_BUTTONS);
                     const body = loadHTMLLayoutFor("worker_menu");
 
                     return (body) ? {
@@ -125,13 +124,12 @@ function onScreenEnter(screen, type) {
         
         default: {
             switch (screen) {
-                // TODO: Make this add a couple of menu items to the start screen.
-                case api.WorkerUI.Const.SCREEN_FLIGHT: {
-                    const body = api.WorkerUI.loadLayout(__dirname, api.WorkerUI.Const.PANEL_CAMERA);
+                case api.WorkerUI.Const.SCREEN_START: {
+                    const body = api.WorkerUI.loadLayout(__dirname, "worker_menu");
 
                     return (body) ? {
                         screen_id: screen,
-                        camera_panel: body
+                        worker_buttons: body
                     } : null;
                 }
 
