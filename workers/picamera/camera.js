@@ -12,6 +12,11 @@ var mRecordingVideo = false;
 var mEvComp = 0.0;
 let mBrightness = 50;
 let mFocus = 0; // far focus
+
+const MIN_BRIGHTNESS = 10;
+const MAX_BRIGHTNESS = 100;
+const BRIGHTNESS_STEP = 10;
+
 const MIN_FOCUS = 0;
 const MAX_FOCUS = 1023;
 const FOCUS_STEP = 50
@@ -75,10 +80,18 @@ function init() {
     try {
         if(fs.existsSync(CMD_FIFO)) {
             cmdWriteStream = fs.createWriteStream(CMD_FIFO);
+
+            cmdWriteStream.on('error', function(ex) {
+                d(`Error on cmdWriteStream: ${ex.message}`);
+            });
         }
 
         if(fs.existsSync(CFG_FIFO)) {
             cfgWriteStream = fs.createWriteStream(CFG_FIFO);
+
+            cfgWriteStream.on('error', function(ex) {
+                d(`Error on cfgWriteStream: ${ex.message}`);
+            });
         }
     } catch(ex) {
         e(ex.message);
@@ -172,20 +185,21 @@ exports.setISO = function(value) {
 
     const iso = value && value.iso;
     if(iso && iso.id) {
-        d(`Send ${iso.id} to the fifo, DIPSHIT`);
         sendFifoCommand(`iso ${iso.id}`);
     }
 }
 
 exports.brightnessUp = function () {
-    if (mBrightness < 100) {
-        sendFifoConfig(`brightness ${++mBrightness}`);
+    if (mBrightness < MAX_BRIGHTNESS) {
+        mBrightness += BRIGHTNESS_STEP;
+        sendFifoConfig(`brightness ${mBrightness}`);
     }
 };
 
 exports.brightnessDown = function() {
-    if(mBrightness > 10) {
-        sendFifoConfig(`brightness ${--mBrightness}`);
+    if(mBrightness > MIN_BRIGHTNESS) {
+        mBrightness -= BRIGHTNESS_STEP;
+        sendFifoConfig(`brightness ${mBrightness}`);
     }
 };
 
