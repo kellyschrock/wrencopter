@@ -1,0 +1,14 @@
+Setting up motorized focus
+
+Run this command:
+
+sudo apt-get install python-opencv 
+
+Edit /boot/config.txt, and ensure this line is in it:
+
+dtparam=i2c_vc=on
+
+Reboot the Pi.
+
+That should be all you need. Well, that, and an ArduCam camera with motorized focus.
+
