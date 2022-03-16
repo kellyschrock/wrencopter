@@ -12,6 +12,7 @@ var mRecordingVideo = false;
 var mEvComp = 0.0;
 let mBrightness = 50;
 let mFocus = 0; // far focus
+let mZoom = 0; // no zoom
 
 const MIN_BRIGHTNESS = 10;
 const MAX_BRIGHTNESS = 100;
@@ -21,8 +22,9 @@ const MIN_FOCUS = 0;
 const MAX_FOCUS = 1023;
 const FOCUS_STEP = 50
 
-let cmdWriteStream = null;
-let cfgWriteStream = null;
+const MIN_ZOOM = 0;
+const MAX_ZOOM = 5;
+const ZOOM_STEP = 1;
 
 function d(str) { console.log(`camera: ${str}`); }
 function e(str) { console.error(`camera: ${str}`); }
@@ -56,60 +58,43 @@ function setLocation(where) {
 }
 
 function sendFifoCommand(command) {
-    // d(`sendToFifo(${command})`);
-    if(cmdWriteStream) {
-        try {
-            cmdWriteStream.write(`${command}\n`);
-        } catch(ex) {
-            e(ex.message);
+    d(`sendToFifo(${command})`);
+
+    const { exec } = require("child_process");
+
+    exec(`echo ${command} > ${CMD_FIFO}`, (err, stdout, stderr) => {
+        if(err) {
+            return d(`Error writing FIFO: ${err.message}`);
         }
-    }
+
+        if(stderr) {
+            return d(`stderr: ${stderr}`);
+        }
+    });
 }
 
 function sendFifoConfig(str) {
-    if(cfgWriteStream) {
-        try {
-            cfgWriteStream.write(`${str}\n`);
-        } catch(ex) {
-            e(ex.message);
+    d(`sendFifoConfig(${str})`);
+
+    const { exec } = require("child_process");
+
+    exec(`echo ${str} > ${CFG_FIFO}`, (err, stdout, stderr) => {
+        if (err) {
+            return d(`Error writing FIFO: ${err.message}`);
         }
-    }
+
+        if (stderr) {
+            return d(`stderr: ${stderr}`);
+        }
+    });
 }
 
 function init() {
-    try {
-        if(fs.existsSync(CMD_FIFO)) {
-            cmdWriteStream = fs.createWriteStream(CMD_FIFO);
-
-            cmdWriteStream.on('error', function(ex) {
-                d(`Error on cmdWriteStream: ${ex.message}`);
-            });
-        }
-
-        if(fs.existsSync(CFG_FIFO)) {
-            cfgWriteStream = fs.createWriteStream(CFG_FIFO);
-
-            cfgWriteStream.on('error', function(ex) {
-                d(`Error on cfgWriteStream: ${ex.message}`);
-            });
-        }
-    } catch(ex) {
-        e(ex.message);
-    }
+    d(`init()`);
 }
 
 function close() {
-    try {
-        if(cmdWriteStream) {
-            cmdWriteStream.close();
-        }
-
-        if(cfgWriteStream) {
-            cfgWriteStream.close();
-        }
-    } catch(ex) {
-        e(ex.message);
-    }
+    d(`close()`);
 }
 
 function takePicture(callback) {
@@ -185,7 +170,7 @@ exports.setISO = function(value) {
 
     const iso = value && value.iso;
     if(iso && iso.id) {
-        sendFifoCommand(`iso ${iso.id}`);
+        sendFifoConfig(`iso ${iso.id}`);
     }
 }
 
@@ -227,8 +212,30 @@ exports.focusDown = function() {
     sendFifoConfig(`focus ${mFocus}`);
 }
 
-exports.focus = function() { 
-    return `${((mFocus / MAX_FOCUS) * 100).toFixed(0)}%`; 
+exports.focus = function () {
+    return `${((mFocus / MAX_FOCUS) * 100).toFixed(0)}%`;
+}
+
+exports.zoomIn = function() {
+    mZoom += ZOOM_STEP;
+    if(mZoom > MAX_ZOOM) {
+        mZoom = MAX_ZOOM;
+    }
+
+    sendFifoConfig(`zoom ${mZoom}`);
+}
+
+exports.zoomOut = function() {
+    mZoom -= ZOOM_STEP;
+    if(mZoom < MIN_ZOOM) {
+        mZoom = MIN_ZOOM;
+    }
+
+    sendFifoConfig(`zoom ${mZoom}`);
+}
+
+exports.zoom = function() {
+    return mZoom;
 }
 
 exports.init = init;

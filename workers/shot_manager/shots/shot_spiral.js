@@ -6,7 +6,7 @@ const MIN_SPEED = 1;
 const MAX_SPEED = 10;
 const RAD_FOR_MIN_SPEED = 2.0;
 const RAD_FOR_MAX_SPEED = 30.0;
-const MIN_TARGET_DISTANCE = 1;
+const MIN_TARGET_DISTANCE = 0.5;
 
 const DIR_NONE = 0;
 const DIR_FWD = 1;

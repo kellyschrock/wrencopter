@@ -18,7 +18,7 @@ const ATTRS = {
 
 const mRCListener = {
     onRCChannelsChanged: function(rc) {
-        console.log(`onRCChannelsChanged(): ${JSON.stringify(rc)}`);
+        // console.log(`onRCChannelsChanged(): ${JSON.stringify(rc)}`);
     }
 };
 
@@ -100,6 +100,7 @@ const mShotListener = {
             if(myMode.number !== guidedMode.number) {
                 ATTRS.api.Vehicle.setMode(guidedMode);
             } else {
+                // Already in guided mode
                 if(mSelectedShot.onEnteredGuidedMode) {
                     mSelectedShot.onEnteredGuidedMode();
                 }
@@ -159,9 +160,9 @@ const mShotListener = {
         ATTRS.sendGCSMessage(ATTRS.id, msg);
     },
 
-    onShotMessage: function(shotId, str) {
+    onShotMessage: function(shotId, str, shade) {
         d(`onShotMessage(): ${shotId}: ${str}`);
-        say(str);
+        say(str, shade);
     },
 
     onSendScreen: function(shotId, pathname) {
@@ -487,8 +488,9 @@ function onBroadcastResponse(msg) {
     // }
 }
 
-function say(str) {
-    ATTRS.api.WorkerUI.sendSpeechMessage(ATTRS, str, ATTRS.api.WorkerUI.SpeechType.TTS);
+function say(str, shade) {
+    const type = (shade) ? ATTRS.api.WorkerUI.SpeechType.TEXT : ATTRS.api.WorkerUI.SpeechType.TTS;
+    ATTRS.api.WorkerUI.sendSpeechMessage(ATTRS, str, type);
 }
 
 exports.getAttributes = getAttributes;

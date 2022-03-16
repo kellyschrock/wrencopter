@@ -3,7 +3,7 @@
     "screen_id": "flight",
     "on_back": {
         "worker_id": "shot_manager",
-        "msg_id": "shot_panel_closed"
+        "msg_id": "orbit_panel_closed"
     },
     "layout": {
         "type": "LinearLayout",

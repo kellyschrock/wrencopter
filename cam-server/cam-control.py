@@ -93,7 +93,10 @@ def handleConfigInput(str):
 		camera.hflip = (str[6:] == "true")
 	elif str.startswith("vflip"):
 		camera.vflip = (str[6:] == "true")
-
+	elif str.startswith("zoom"):
+		zoom_value = int(str[5:]) / 10.0
+		if zoom_value < 1.0:
+			camera.zoom = (zoom_value, zoom_value, 1.0 - zoom_value, 1.0 - zoom_value)
 
 def handleCommandInput(str):
 	global _camServerRun
@@ -151,7 +154,7 @@ def cameraServer():
 		camsink.add(take_picture)
 
 		try:
-			camera.start_recording(camsink, format='h264')
+			camera.start_recording(camsink, format='h264', bitrate=1000000)
 
 			while _camServerRun:
 				camera.wait_recording(1)
