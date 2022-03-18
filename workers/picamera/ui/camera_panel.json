@@ -16,7 +16,8 @@
         "textColor": "white",
         "textSize": 18,
         "paddingBottom": 8,
-        "background": "@null"
+        "background": "@null",
+        "visibility": "gone"
       },
       {
         "type": "Space",
@@ -154,7 +155,7 @@
         "type": "TextView",
         "layout_width": "match_parent",
         "layout_height": "wrap_content",
-        "layout_marginTop": 30,
+        "layout_marginTop": 15,
         "text": "Brightness",
         "gravity": "center"
       },
@@ -162,7 +163,7 @@
         "type": "LinearLayout",
         "layout_width": "match_parent",
         "layout_height": "wrap_content",
-        "layout_marginTop": 18,
+        "layout_marginTop": 8,
         "orientation": "horizontal",
         "gravity": "center",
         "children": [
@@ -203,7 +204,53 @@
         "type": "TextView",
         "layout_width": "match_parent",
         "layout_height": "wrap_content",
-        "layout_marginTop": 30,
+        "layout_marginTop": 15,
+        "text": "Zoom",
+        "gravity": "center"
+      },
+      {
+        "type": "LinearLayout",
+        "layout_width": "match_parent",
+        "layout_height": "wrap_content",
+        "layout_marginTop": 8,
+        "orientation": "horizontal",
+        "gravity": "center",
+        "children": [
+          {
+            "type": "ImageButton",
+            "id": "btn_zoom_out",
+            "layout_width": 50,
+            "layout_height": 50,
+            "icon": "$(img)/picamera/subtract_white.png",
+            "on_click": {
+              "worker_id": "picamera", "msg_id": "zoom_out"
+            }
+          },
+          {
+            "type": "TextView",
+            "id": "txt_zoom",
+            "layout_width": "wrap_content",
+            "layout_height": "wrap_content",
+            "text": "0",
+            "gravity": "center",
+            "paddingLeft": 12,
+            "paddingRight": 12
+          },
+          {
+            "type": "ImageButton",
+            "id": "btn_zoom_in",
+            "layout_width": 50,
+            "layout_height": 50,
+            "icon": "$(img)/picamera/add_white.png",
+            "on_click": { "worker_id": "picamera", "msg_id": "zoom_in" }
+          }
+        ]
+      },
+      {
+        "type": "TextView",
+        "layout_width": "match_parent",
+        "layout_height": "wrap_content",
+        "layout_marginTop": 15,
         "text": "Focus",
         "gravity": "center"
       },
@@ -211,7 +258,7 @@
         "type": "LinearLayout",
         "layout_width": "match_parent",
         "layout_height": "wrap_content",
-        "layout_marginTop": 18,
+        "layout_marginTop": 8,
         "orientation": "horizontal",
         "gravity": "center",
         "children": [

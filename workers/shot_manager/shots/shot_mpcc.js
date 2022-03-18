@@ -10,7 +10,7 @@ const MODE_POINTS = 1;
 const MODE_RUN = 2;
 
 // Distance between generated run points. Make this shorter for more points and smoother movement.
-const RUN_POINT_DIST = 1; // m
+const RUN_POINT_DIST = 0.3; // m
 
 let ATTRS;
 let Vehicle;
@@ -24,7 +24,7 @@ let mListener;
 
 let mVehicleLocation;
 let mShotRunning = false;
-let mMinTargetDistance = RUN_POINT_DIST * 2;
+let mMinTargetDistance = RUN_POINT_DIST * 3;
 
 const mShotParams = {
     speed: 2
@@ -120,8 +120,12 @@ function onGCSMessage(msg) {
         // User hit "Done" in add-points mode.
         // Send a new screen to the GCS and switch to Guided mode to start the actual shot.
         case "mpcc_add_points_done": {
-            setRunMode(MODE_RUN);
-            mListener.onShotStart();
+            onAddPointsDone(msg);
+            break;
+        }
+
+        case "mpcc_start_shot": {
+            onStartShotClick(msg);
             break;
         }
 
@@ -131,25 +135,17 @@ function onGCSMessage(msg) {
         }
 
         case "mpcc_go_reverse": {
-            mDirection = DIR_REV;
-            headToNextLocation();
+            onReverseClick(msg);
             break;
         }
 
         case "mpcc_go_pause": {
-            mDirection = DIR_NONE;
-            headToNextLocation();
+            onPauseClick(msg);
             break;
         }
 
         case "mpcc_go_forward": {
-            mDirection = DIR_FWD;
-            headToNextLocation();
-            break;
-        }
-
-        case "mpcc_start_shot": {
-            mListener.onShotStart();
+            onForwardClick(msg);
             break;
         }
 
@@ -179,26 +175,6 @@ function isRunning() {
     return mShotRunning; 
 }
 
-function generateROI(paramsArg) {
-    const params = paramsArg || mShotParams;
-
-    const heading = getVehicleHeading();
-    if (heading == undefined) {
-        onShotError("No vehicle heading");
-        return null;
-    }
-
-    // shot params
-    const radius = params.radius || 10;
-
-    // Set a ROI at the center of the circle, based on radius
-    const roiPoint = MathUtils.newCoordFromBearingAndDistance(mVehicleLocation, heading, radius);
-    roiPoint.alt = 1;
-    d(`heading=${heading}, roiPoint=${JSON.stringify(roiPoint)}`);
-
-    return roiPoint;
-}
-
 // Starts the shot.
 function startShot(params) {
     d(`startShot(): params=${JSON.stringify(params)}`);
@@ -210,9 +186,6 @@ function startShot(params) {
     if(!mVehicleLocation) {
         return onShotError("No vehicle position");
     }
-
-    // mSavedPoints is populated now, so fill mRunPoints
-    doGenerateRunPoints();
 }
 
 function doTestRun() {
@@ -231,12 +204,13 @@ function doTestRun() {
     startShot(mShotParams);
     setRunMode(MODE_RUN);
     onEnteredGuidedMode({});
+    doGenerateRunPoints();
 }
 
 function addSavePoint(msg) {
     d(`addSavePoint(${JSON.stringify(msg)})`);
 
-    if(!mVehicleLocation) return d(`No vehicle location!`);
+    if(!mVehicleLocation) return mListener.onShotMessage(SHOT_ID, `Add point: No vehicle location!`);
 
     const heading = getVehicleHeading();
     const point = {
@@ -246,7 +220,35 @@ function addSavePoint(msg) {
     };
 
     mSavedPoints.push(point);
-    
+    mListener.onShotMessage(SHOT_ID, "Point Added", true);
+}
+
+function onAddPointsDone(msg) {
+    // mSavedPoints is populated now, so fill mRunPoints
+    mListener.onShotMessage(SHOT_ID, "Done adding points");
+    setRunMode(MODE_RUN);
+    doGenerateRunPoints();
+}
+
+function onStartShotClick(msg) {
+    mListener.onShotStartReady(SHOT_ID);
+}
+
+function onForwardClick(msg) {
+    mListener.onShotMessage(SHOT_ID, "Forward");
+    mDirection = DIR_FWD;
+    headToNextRunPoint();
+}
+
+function onReverseClick(msg) {
+    mListener.onShotMessage(SHOT_ID, "Reverse");
+    mDirection = DIR_REV;
+    headToNextRunPoint();
+}
+
+function onPauseClick(msg) {
+    mListener.onShotMessage(SHOT_ID, "Pause");
+    mDirection = DIR_NONE;
 }
 
 function updateRunSpeed(msg) {
@@ -271,18 +273,27 @@ function updateRunSpeed(msg) {
 }
 
 function doGenerateRunPoints() {
-    const genPoints = generateRunPoints(mSavedPoints);
-    for(const point of genPoints) {
-        mRunPoints.push(point);
-    }
+    try {
+        const genPoints = generateRunPoints(mSavedPoints);
+        for (const point of genPoints) {
+            mRunPoints.push(point);
+        }
 
-    d(`doGenerateRunPoints(): ${mRunPoints.length} points`);
+        // Make it where you can rewind from the end.
+        mPathIndex = mRunPoints.length - 1;
+
+        mListener.onShotMessage(SHOT_ID, `Generated ${mRunPoints.length} points from ${mSavedPoints.length} saved points`);
+        mListener.onShotMessage(SHOT_ID, `Fly near the first location and press Start. Or, press Reverse to rewind to the beginning.`);
+    } catch(ex) {
+        mListener.onShotError(SHOT_ID, ex.message);
+    }
 }
 
 function generateRunPoints(savedPoints) {
     if(savedPoints.length == 0) {
+        mListener.onShotMessage(SHOT_ID, "No saved points");
         d(`generateRunPoints(): No saved points`);
-        return false;
+        return [];
     }
 
     const output = [];
@@ -298,8 +309,12 @@ function generateRunPoints(savedPoints) {
             const heading = MathUtils.getHeadingFromCoordinates(here, there);
             // How far from here to there.
             const totalDistance = MathUtils.getDistance3D(here, there);
-            
+
             const stepCount = (totalDistance / RUN_POINT_DIST);
+
+            if(totalDistance <= 0 || stepCount <= 0) {
+                throw new Error("Error in saved points: Zero distance");
+            }
 
             // Altitude
             const altDiff = (there.alt - here.alt);
@@ -335,6 +350,7 @@ function generateRunPoints(savedPoints) {
                     gimbal: currGimbal
                 };
 
+                d(`gen=${JSON.stringify(gen)}`);
                 output.push(gen);
 
                 dist += RUN_POINT_DIST;
@@ -435,7 +451,12 @@ function onVehicleMoved(where) {
         return onShotError("Moved: No vehicle location");
     }
 
-    mVehicleLocation = where;
+    if(mVehicleLocation) {
+        const dist = MathUtils.getDistance2D(mVehicleLocation, where);
+        d(`distToLast=${dist}`);
+    }
+
+    mVehicleLocation = {lat: where.lat, lng: where.lng, alt: where.alt };
 
     if(!mShotRunning) return;
 
@@ -449,7 +470,7 @@ function onVehicleMoved(where) {
             // If we've gotten near the target point, go to the next one.
             // Keep doing this until the user hits stop or changes modes.
             if (distToTarget <= (mMinTargetDistance * (getShotSpeed()))) {
-                headToNextLocation();
+                headToNextRunPoint();
             }
         } else {
             d(`Invalid distance ${distToTarget}`);
@@ -462,6 +483,7 @@ function onPanelOpened(body) {
 
     // TODO: It's saying this twice for some reason. FIX.
     // mListener.onShotMessage(SHOT_ID, "Fly to points and save locations by pressing Add Point at each location. Then press Done Adding Points to go to the next step.");
+    mListener.onShotMessage(SHOT_ID, `Clearing ${mSavedPoints.length} saved points`);
     mSavedPoints.splice(0, mSavedPoints.length);
     mRunPoints.splice(0, mRunPoints.length);
 }
@@ -491,10 +513,36 @@ function onEnteredGuidedMode(mode) {
     mListener.onShotMessage(SHOT_ID, "Press Forward or Back to fly along the generated path.");
 }
 
+let timerHandle = null;
+let timerInterval = 100; // ms
+
+function pushLocation() {
+    const next = nextRunPoint();
+    if(next) {
+        Vehicle.gotoPoint(next);
+        Vehicle.setYaw(next.yaw);
+        // TODO: Set gimbal angle to next.gimbal
+    } else {
+        mListener.onShotMessage(SHOT_ID, "Path complete");
+        clearInterval(timerHandle);
+        timerHandle = null;
+    }
+}
+
+function runOnPath(dir) {
+    if(timerHandle) {
+        clearInterval(timerHandle);
+    }
+
+    mDirection = dir;
+
+    timerHandle = setInterval(pushLocation, timerInterval);
+}
+
 // Starts toward the next target location
-function headToNextLocation() {
-    mTargetPoint = nextLocation();
-    d(`headToNextLocation(): mTargetPoint=${JSON.stringify(mTargetPoint)}`);
+function headToNextRunPoint() {
+    mTargetPoint = nextRunPoint();
+    d(`headToNextRunPoint(): mTargetPoint=${JSON.stringify(mTargetPoint)}`);
 
     if (mTargetPoint) {
         // This should affect altitude as well as lat/lng
@@ -513,7 +561,7 @@ function getShotSpeed() {
     return speed;
 }
 
-function nextLocation() {
+function nextRunPoint() {
     if(mRunPoints.length == 0) return null;
 
     let result = null;

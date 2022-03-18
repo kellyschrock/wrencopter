@@ -92,7 +92,6 @@ def handleConfigInput(str):
 		camera.iso = int(str[4:].strip())
 	elif str.startswith("focus"):
 		focus_val = int(str[6:].strip())
-		say(focus_val)
 		arducam_vcm.vcm_write(focus_val)
 	elif str.startswith("drc"): # off, low, medium, high
 		camera.drc_strength = str[4:]
@@ -100,6 +99,10 @@ def handleConfigInput(str):
 		camera.hflip = (str[6:] == "true")
 	elif str.startswith("vflip"):
 		camera.vflip = (str[6:] == "true")
+	elif str.startswith("zoom"):
+		zoom_value = int(str[5:]) / 10.0
+		if zoom_value < 1.0:
+			camera.zoom = (zoom_value, zoom_value, 1.0 - zoom_value, 1.0 - zoom_value)
 
 
 def handleCommandInput(str):
@@ -161,7 +164,7 @@ def cameraServer():
 		camsink.add(take_picture)
 
 		try:
-			camera.start_recording(camsink, format='h264')
+			camera.start_recording(camsink, format='h264', bitrate=1000000)
 
 			while _camServerRun:
 				camera.wait_recording(1)

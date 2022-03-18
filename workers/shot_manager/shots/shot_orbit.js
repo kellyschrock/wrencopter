@@ -146,18 +146,21 @@ function onGCSMessage(msg) {
         }
 
         case "orbit_go_reverse": {
+            mListener.onShotMessage(SHOT_ID, "Reverse");
             mDirection = DIR_REV;
             headToNextLocation();
             break;
         }
 
         case "orbit_go_pause": {
+            mListener.onShotMessage(SHOT_ID, "Pause");
             mDirection = DIR_NONE;
             headToNextLocation();
             break;
         }
 
         case "orbit_go_forward": {
+            mListener.onShotMessage(SHOT_ID, "Forward");
             mDirection = DIR_FWD;
             headToNextLocation();
             break;
@@ -395,6 +398,7 @@ function headToNextLocation() {
     d(`headToNextLocation(): mTargetPoint=${JSON.stringify(mTargetPoint)}`);
 
     if (mTargetPoint) {
+        // TODO: Someday, use pointsBetween() to fly smoothly along the course between vehicleLocation and targetPoint.
         Vehicle.gotoPoint(mTargetPoint);
 
         if(mROIPoint) {
@@ -405,8 +409,26 @@ function headToNextLocation() {
     }
 }
 
+function pointsBetween(here, there) {
+    if(!here || !there) return [];
+
+    const out = [here];
+
+    const dist = MathUtils.getDistance2D(here, there);
+    const jump = dist / 10;
+    const head = MathUtils.getHeadingFromCoordinates(here, there);
+
+    for(let d = jump; d < dist; d += jump) {
+        const pt = MathUtils.newCoordFromBearingAndDistance(here, head, d);
+        out.push(pt);
+    }
+
+    out.push(there);
+    return out;
+}
+
 function getShotSpeed() {
-    let speed = Math.min(mShotParams.speed || 2, maxStrafeSpeed(mShotParams.radius));
+    let speed = mShotParams.speed || 2; // Math.min(mShotParams.speed || 2, maxStrafeSpeed(mShotParams.radius));
     if(isNaN(speed)) speed = 1;
     return speed;
 }

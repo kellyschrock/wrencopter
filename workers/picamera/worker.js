@@ -296,6 +296,18 @@ function onGCSMessage(msg) {
             break;
         }
 
+        case "zoom_in": {
+            camera.zoomIn();
+            sendZoomUpdate(camera.zoom());
+            break;
+        }
+
+        case "zoom_out": {
+            camera.zoomOut();
+            sendZoomUpdate(camera.zoom());
+            break;
+        }
+
         case "do_vflip": {
             camera.doVFlip(msg.checked);
             break;
@@ -369,6 +381,19 @@ function sendFocusUpdate(focus) {
         values: {
             txt_focus: {
                 text: `${focus}`
+            }
+        }
+    });
+}
+
+function sendZoomUpdate(zoom) {
+    ATTRS.sendGCSMessage(ATTRS.id, {
+        id: "screen_update",
+        screen_id: "flight",
+        panel_id: "camera_panel",
+        values: {
+            txt_zoom: {
+                text: `${zoom}`
             }
         }
     });
@@ -522,7 +547,7 @@ function sendCameraHeartbeat(sysid) {
     const now = Date.now();
 
     if ((now - lastHeartbeatTime) > 4000) {
-        d(`sendCameraHeartbeat(${sysid})`);
+        // d(`sendCameraHeartbeat(${sysid})`);
         const mavlink = ATTRS.api.Mavlink;
 
         const msg = {

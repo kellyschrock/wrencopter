@@ -3,7 +3,7 @@
     "screen_id": "flight",
     "on_back": {
         "worker_id": "shot_manager",
-        "msg_id": "shots_panel_closed"
+        "msg_id": "selfie_panel_closed"
     },
     "layout": {
         "type": "LinearLayout",

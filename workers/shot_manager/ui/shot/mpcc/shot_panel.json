@@ -173,7 +173,7 @@
                                         "layout_width": "wrap_content",
                                         "layout_height": "wrap_content",
                                         "text": "REV",
-                                        "textColor": "#AA0000",
+                                        "textColor": "#FF0000",
                                         "background": "@null",
                                         "on_click": {
                                             "worker_id": "shot_manager",
@@ -198,7 +198,7 @@
                                         "layout_width": "wrap_content",
                                         "layout_height": "wrap_content",
                                         "text": "FWD",
-                                        "textColor": "#00AA00",
+                                        "textColor": "#00FF00",
                                         "background": "@null",
                                         "on_click": {
                                             "worker_id": "shot_manager",
@@ -206,7 +206,34 @@
                                         }
                                     }
                                 ]
-                            }                            
+                            },
+                            {
+                                "type": "LinearLayout",
+                                "layout_width": "match_parent",
+                                "layout_height": "wrap_content",
+                                "orientation": "horizontal",
+                                "children": [
+                                    {
+                                        "type": "View",
+                                        "layout_width": "0dip",
+                                        "layout_height": "1dip",
+                                        "layout_weight": 1
+                                    },
+                                    {
+                                        "type": "Button",
+                                        "id": "shot_select",
+                                        "layout_width": "wrap_content",
+                                        "layout_height": "wrap_content",
+                                        "text": "Start",
+                                        "textColor": "green",
+                                        "background": "@null",
+                                        "on_click": {
+                                            "worker_id": "shot_manager",
+                                            "msg_id": "mpcc_start_shot"
+                                        }
+                                    }
+                                ]
+                            }
                         ]
                     }
                 ]
