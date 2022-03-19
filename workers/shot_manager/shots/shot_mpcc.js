@@ -51,8 +51,6 @@ function d(str) {
 // Public interface
 //
 function init(attrs, listener) {
-    d(`init()`);
-
     ATTRS = attrs;
     WorkerUI = attrs.api.WorkerUI;
     Vehicle = attrs.api.Vehicle;
@@ -493,8 +491,6 @@ function isValidDistance(dist) {
 }
 
 function getShotInfo() {
-    d("getShotInfo()");
-
     return {
         // Id for this shotInfo
         id: "mpcc",

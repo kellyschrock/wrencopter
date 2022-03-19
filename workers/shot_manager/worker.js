@@ -22,6 +22,8 @@ const mRCListener = {
     }
 };
 
+let MathUtils;
+
 let mVehicleLocation = null;
 
 const mVehicleEventListener = {
@@ -29,15 +31,48 @@ const mVehicleEventListener = {
         // d(`onDroneEvent(${event}, ${JSON.stringify(extras)})`);
 
         switch (event) {
+            case ATTRS.api.Vehicle.Events.SPEED_UPDATED: {
+                const shot = mSelectedShot;
+                if(!shot) return;
+
+                if(shot.onSpeedUpdated) {
+                    shot.onSpeedUpdated(extras && extras.groundSpeed || 0);
+                }
+                break;
+            }
+
             case ATTRS.api.Vehicle.Events.LOCATION_UPDATED: {
                 // d(`Location updated: ${JSON.stringify(extras)}`);
 
-                mVehicleLocation = extras;
+                const now = Date.now();
+
+                if(mVehicleLocation) {
+                    if(!mVehicleLocation.when) {
+                        mVehicleLocation.when = now;
+                    }
+
+                    mVehicleLocation.timeSinceLast = (now - mVehicleLocation.when);
+                    mVehicleLocation.distanceFromLast = MathUtils.getDistance2D(mVehicleLocation, extras);
+
+                    mVehicleLocation.lat = extras.lat;
+                    mVehicleLocation.lng = extras.lng;
+                    mVehicleLocation.alt = extras.alt;
+
+                    if(mVehicleLocation.distanceFromLast) {
+                        mVehicleLocation.speed = (mVehicleLocation.distanceFromLast / mVehicleLocation.timeSinceLast);
+                    }
+                } else {
+                    mVehicleLocation = Object.assign({ when: now }, extras);
+                }
+
+                mVehicleLocation.when = Date.now();
 
                 const shot = mSelectedShot;
                 if (!shot) return;
 
-                if(shot.onVehicleMoved) shot.onVehicleMoved(extras);
+                if(shot.onVehicleMoved) {
+                    shot.onVehicleMoved(mVehicleLocation);
+                }
                 break;
             }
 
@@ -204,7 +239,7 @@ function loop() { }
 
 // Called when this worker is loaded.
 function onLoad() {
-    d("onLoad()");
+    MathUtils = ATTRS.api.MathUtils;
 
     // Update the mavlink messages we're interested in.
     // Note that we can't do it in ATTRS above, since Vehicle isn't loaded into this module
@@ -326,6 +361,8 @@ function openShotUI(msg) {
 
     mSelectedShot = shot;
 
+    say(`Selected shot ${shot.info.id}`);
+
     if(!shot) {
         return d(`No shot for ${shot.id}`);
     }
@@ -419,8 +456,6 @@ function onImageDownload(name) {
 }
 
 function gatherShotInfo() {
-    d("gatherShotInfo()");
-
     // Iterate through all the files in the shots directory and 
     // require() them as modules.
     const dir = getShotsDir();

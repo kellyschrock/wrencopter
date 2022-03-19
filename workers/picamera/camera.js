@@ -58,7 +58,7 @@ function setLocation(where) {
 }
 
 function sendFifoCommand(command) {
-    d(`sendToFifo(${command})`);
+    // d(`sendToFifo(${command})`);
 
     const { exec } = require("child_process");
 

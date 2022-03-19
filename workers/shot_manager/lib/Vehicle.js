@@ -461,7 +461,7 @@ function processGlobalPositionInt(msg) {
 }
 
 function processVfrHud(msg) {
-    var speed = mState.speed;
+    let speed = mState.speed;
 
     if(!speed) {
         speed = {
