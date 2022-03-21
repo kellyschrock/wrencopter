@@ -5,6 +5,12 @@ const DIR_NONE = 0;
 const DIR_FWD = 1;
 const DIR_REV = 2;
 
+const VERBOSE = true;
+
+function d(str) {
+    if(VERBOSE) console.log(`LocationFlow: ${str}`);
+}
+
 class LocationFlow {
 
     constructor(listener) {
@@ -17,6 +23,8 @@ class LocationFlow {
         this.pathIndex = 0;
         this.currVehicleSpeed = 0;
         this.running = false;
+        this.autoRewind = false;
+        this.waitOnVehicle = false;
     }
 
     isRunning() { return this.running; }
@@ -25,6 +33,12 @@ class LocationFlow {
         this.currVehicleSpeed = vehicleSpeed;
         return this;
     }
+
+    isAutoRewind() { return this.autoRewind; }
+    setAutoRewind(rw) { this.autoRewind = rw; return this; }
+
+    waitsOnVehicle() { return this.waitOnVehicle; }
+    setWaitOnVehicle(wait) { this.waitOnVehicle = wait; return this; }
 
     setPoints(input) {
         this.points.splice(0, this.points.length);
@@ -104,6 +118,24 @@ class LocationFlow {
     nextPoint() {
         let out = null;
 
+        if(this.autoRewind) {
+            switch(this.direction) {
+                case DIR_FWD: {
+                    if (this.pathIndex >= (this.points.length - 1)) {
+                        this.pathIndex = 0;
+                    }
+                    break;
+                }
+
+                case DIR_REV: {
+                    if(this.pathIndex <= 0) {
+                        this.pathIndex = (this.points.length - 1);
+                    }
+                    break;
+                }
+            }
+        }
+
         switch(this.direction) {
             case DIR_FWD: {
                 if(this.pathIndex < this.points.length) {
@@ -146,10 +178,13 @@ class LocationFlow {
 
             // If not traveling at targetSpeed, wait a bit before sending the next location.
             // But not too much, otherwise it won't go anywhere.
-            // if(currSpeed > 0 && currSpeed < this.targetSpeed) {
-            //     const delay = ((1000 / currSpeed) * this.pointSpacing) / 2;
-            //     timerInterval += Math.min(this.timerInterval, delay);
-            // }
+            if(this.waitOnVehicle) {
+                if (currSpeed > 0 && currSpeed < this.targetSpeed) {
+                    const delay = ((1000 / currSpeed) * this.pointSpacing) / 10;
+                    timerInterval += Math.min(this.timerInterval, delay);
+                    d(`delay=${delay} timerInterval=${timerInterval}`);
+                }
+            }
 
             this.timerHandle = setTimeout(this.processPoint.bind(this), timerInterval);
         } else {

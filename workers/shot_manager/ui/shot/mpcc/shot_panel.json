@@ -38,7 +38,7 @@
                 "layout_gravity": "bottom",
                 "orientation": "vertical",
                 "padding": 20,
-                "background": "#ee000000",
+                "background": "#aa000000",
                 "children": [
                     {
                         "type": "TextView",
@@ -167,6 +167,20 @@
                                 "orientation": "horizontal",
                                 "gravity": "center_vertical|right",
                                 "children": [
+                                    {
+                                        "type": "Button",
+                                        "id": "btn_fly_to_start",
+                                        "layout_width": "wrap_content",
+                                        "layout_height": "wrap_content",
+                                        "layout_marginLeft": 20,
+                                        "text": "Fly to first point",
+                                        "enabled": false,
+                                        "background": "@null",
+                                        "on_click": {
+                                            "worker_id": "shot_manager",
+                                            "msg_id": "mpcc_goto_start"
+                                        }
+                                    },
                                     {
                                         "type": "Button",
                                         "id": "btn_reverse",

@@ -19,7 +19,7 @@
                 "layout_gravity": "bottom",
                 "orientation": "vertical",
                 "padding": 20,
-                "background": "#ee000000",
+                "background": "#AA000000",
                 "children": [
                     {
                         "type": "TextView",

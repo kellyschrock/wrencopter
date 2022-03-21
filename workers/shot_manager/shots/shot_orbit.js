@@ -8,9 +8,8 @@ const ORBIT_RAD_FOR_MIN_SPEED = 2.0;
 const ORBIT_RAD_FOR_MAX_SPEED = 30.0;
 const MIN_TARGET_DISTANCE = 1;
 
-const DIR_NONE = 0;
-const DIR_FWD = 1;
-const DIR_REV = 2;
+const { LocationFlow, DIR_FWD, DIR_REV, DIR_NONE } = require("../lib/LocationFlow");
+const { PathGen } = require("../lib/PathGen");
 
 let ATTRS;
 let Vehicle;
@@ -36,6 +35,7 @@ let mPathIndex = 0;
 let mDirection = DIR_NONE;
 let mTargetPoint = null;
 let mROIPoint = null;
+let mLocationFlow = null;
 
 const VERBOSE = false;
 
@@ -47,8 +47,6 @@ function d(str) {
 // Public interface
 //
 function init(attrs, listener) {
-    d(`init()`);
-
     ATTRS = attrs;
     WorkerUI = attrs.api.WorkerUI;
     Vehicle = attrs.api.Vehicle;
@@ -57,6 +55,19 @@ function init(attrs, listener) {
     MathUtils = attrs.api.MathUtils;
 
     mListener = listener;
+
+    mLocationFlow = new LocationFlow({
+        onComplete: function () {
+            // Send the next path segment
+            mListener.onShotMessage(SHOT_ID, "Path complete");
+        },
+
+        onLocation: function (where, index, count) {
+            // d(`onLocation(): send ${JSON.stringify(where)}`);
+            Vehicle.gotoPoint(where);
+            Vehicle.setROI(mROIPoint);
+        }
+    });
 }
 
 function initShotPanel(body) {
@@ -125,7 +136,7 @@ function onGCSMessage(msg) {
         }
 
         case "orbit_speed_updated": {
-            mShotParams.speed = msg.speed;
+            mShotParams.speed = msg.speed || 1;
 
             mListener.sendGCSMessage({
                 id: "screen_update",
@@ -139,7 +150,7 @@ function onGCSMessage(msg) {
             });
 
             if(mShotRunning) {
-                Vehicle.setSpeed(getShotSpeed());
+                mLocationFlow.setTargetSpeed(getShotSpeed());
             }
 
             break;
@@ -148,21 +159,25 @@ function onGCSMessage(msg) {
         case "orbit_go_reverse": {
             mListener.onShotMessage(SHOT_ID, "Reverse");
             mDirection = DIR_REV;
-            headToNextLocation();
+            mLocationFlow.start(mDirection);
+            // headToNextLocation();
             break;
         }
 
         case "orbit_go_pause": {
             mListener.onShotMessage(SHOT_ID, "Pause");
             mDirection = DIR_NONE;
-            headToNextLocation();
+            mLocationFlow.pause();
+            // mDirection = DIR_NONE;
+            // headToNextLocation();
             break;
         }
 
         case "orbit_go_forward": {
             mListener.onShotMessage(SHOT_ID, "Forward");
             mDirection = DIR_FWD;
-            headToNextLocation();
+            mLocationFlow.start(mDirection);
+            // headToNextLocation();
             break;
         }
 
@@ -239,10 +254,27 @@ function startShot(params) {
     const heading = getVehicleHeading();
 
     mPath = generatePath(roiPoint, mVehicleLocation.alt || 10, radius, heading);
+    const spacing = getSpacingIn(mPath);
+    if(spacing == 0) {
+        return onShotError(`Cannot get point spacing from path`);
+    }
+
+    mLocationFlow
+        .setAutoRewind(true)
+        .setWaitOnVehicle(true)
+        .setPoints(mPath)
+        .setPointSpacing(spacing)
+        .setTargetSpeed(mShotParams.speed)
+        ;
 
     mPathIndex = 0; // First point in the path is the vehicle's current location.
 
     mListener.onShotStartReady(SHOT_ID);
+}
+
+function getSpacingIn(path) {
+    return (path.length >= 2)?
+        MathUtils.getDistance2D(path[0], path[1]): 0;
 }
 
 function updateRunningRadius() {
@@ -265,6 +297,11 @@ function updateRunningRadius() {
         const rh = MathUtils.getHeadingFromCoordinates(mROIPoint, pt);
         const np = MathUtils.newCoordFromBearingAndDistance(mROIPoint, rh, radius);
         mPath[i] = np;
+    }
+
+    if(mShotRunning) {
+        const spacing = getSpacingIn(mPath);
+        mLocationFlow.setPoints(mPath).setPointSpacing(spacing);
     }
 }
 
@@ -291,7 +328,7 @@ function generatePath(roiPoint, alt, radius, heading) {
     // Make a path around the ROI point at $radius every n degrees. Start with the current heading and loop around 
     // to the same point.
     const circum = radius * 2.0 * Math.PI;
-    const arcLen = ((1 / 360) * circum) * 4;
+    const arcLen = ((1 / 360) * circum) * 1;
     const totalSteps = (circum / arcLen);
     const stepSize = (360 / totalSteps);
     d(`circum=${circum} arcLen=${arcLen} stepSize=${stepSize}`);
@@ -327,14 +364,20 @@ function stopShot() {
         mTargetPoint = null;
         mROIPoint = null;
     }
+
+    mLocationFlow.stop();
 }
 
 function isRunning() {
     return mShotRunning;
 }
 
+exports.onSpeedUpdated = function(speed) {
+    mLocationFlow.onSpeedUpdated(speed);
+}
+
 function onVehicleMoved(where) {
-    d(`onVehicleMoved(): where=${JSON.stringify(where)}`);
+    // d(`onVehicleMoved(): where=${JSON.stringify(where)}`);
 
     if(!where) {
         return onShotError("Moved: No vehicle location");
@@ -363,8 +406,6 @@ function isValidDistance(dist) {
 }
 
 function getShotInfo() {
-    d("getShotInfo()");
-
     return {
         // Id for this shotInfo
         id: "orbit",
@@ -394,6 +435,15 @@ function onEnteredGuidedMode(mode) {
 
 // Starts toward the next target location
 function headToNextLocation() {
+    // function copyPoint(input) {
+    //     return (input)?
+    //         { lat: input.lat, lng: input.lng, alt: input.alt }: null;
+    // }
+
+    // const here = (mTargetPoint)? 
+    //     copyPoint(mTargetPoint):
+    //     copyPoint(mVehicleLocation);
+
     mTargetPoint = nextLocation();
     d(`headToNextLocation(): mTargetPoint=${JSON.stringify(mTargetPoint)}`);
 
@@ -407,24 +457,6 @@ function headToNextLocation() {
 
         Vehicle.setSpeed(getShotSpeed());
     }
-}
-
-function pointsBetween(here, there) {
-    if(!here || !there) return [];
-
-    const out = [here];
-
-    const dist = MathUtils.getDistance2D(here, there);
-    const jump = dist / 10;
-    const head = MathUtils.getHeadingFromCoordinates(here, there);
-
-    for(let d = jump; d < dist; d += jump) {
-        const pt = MathUtils.newCoordFromBearingAndDistance(here, head, d);
-        out.push(pt);
-    }
-
-    out.push(there);
-    return out;
 }
 
 function getShotSpeed() {
@@ -510,7 +542,7 @@ exports.test = function(state) {
 
 function testPathGen(state) {
     // shot params
-    const radius = 10;
+    const radius = 20;
     const heading = state.vehicle_heading || 90;
     const where = state.location;
 
@@ -523,14 +555,17 @@ function testPathGen(state) {
         const path = generatePath(roiPoint, where.alt || 10, radius, heading);
         d(`path.length=${path.length}`);
 
-        let str = `${state.location.lat}\t${state.location.lng}\tdot3\tred\t0\tVehicle\n`;
-        str += `${roiPoint.lat}\t${roiPoint.lng}\tdot3\tgreen\t0\tROI\n`;
-        let number = 0;
-        path.map(function (pt) {
-            str += (`${pt.lat}\t${pt.lng}\tnumbered\tyellow\t${++number}\t${pt.alt.toFixed(2)}\n`);
-        });
+        let spacing = MathUtils.getDistance2D(path[0], path[1]);
+        d(`spacing=${spacing.toFixed(1)}`);
 
-        d(str);
+        // let str = `${state.location.lat}\t${state.location.lng}\tdot3\tred\t0\tVehicle\n`;
+        // str += `${roiPoint.lat}\t${roiPoint.lng}\tdot3\tgreen\t0\tROI\n`;
+        // let number = 0;
+        // path.map(function (pt) {
+        //     str += (`${pt.lat}\t${pt.lng}\tnumbered\tyellow\t${++number}\t${pt.alt.toFixed(2)}\n`);
+        // });
+
+        // d(str);
 
         // mPath = path;
 
@@ -556,4 +591,14 @@ function testStrafeSpeed() {
         d(`speed=${speed}`);
     });
 }
+
+if(process.mainModule == module) {
+    MathUtils = require("../lib/MathUtils");
+
+    testPathGen({
+        location: { lat: 38.61942391567368, lng: -94.40092639136456, alt: 10 },
+        vehicle_heading: 0
+    });
+}
+
 

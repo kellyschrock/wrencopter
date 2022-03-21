@@ -37,7 +37,11 @@
                 "layout_gravity": "bottom",
                 "orientation": "vertical",
                 "padding": 20,
-                "background": "#ee000000",
+                "background": "#aa000000",
+                "on_click": {
+                    "worker_id": "shot_manager",
+                    "msg_id": "panel_click"
+                },
                 "children": [
                     {
                         "type": "TextView",
@@ -154,7 +158,7 @@
                                 "layout_width": "wrap_content",
                                 "layout_height": "wrap_content",
                                 "text": "REV",
-                                "textColor": "#AA0000",
+                                "textColor": "red",
                                 "background": "@null",
                                 "on_click": {
                                     "worker_id": "shot_manager",
@@ -179,7 +183,7 @@
                                 "layout_width": "wrap_content",
                                 "layout_height": "wrap_content",
                                 "text": "FWD",
-                                "textColor": "#00AA00",
+                                "textColor": "green",
                                 "background": "@null",
                                 "on_click": {
                                     "worker_id": "shot_manager",

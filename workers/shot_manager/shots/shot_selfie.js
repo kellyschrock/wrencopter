@@ -98,7 +98,7 @@ function onGCSMessage(msg) {
         }
 
         case "selfie_distance_updated": {
-            mShotParams.distance = msg.distance;
+            mShotParams.distance = msg.distance || 10;
 
             mListener.sendGCSMessage({
                 id: "screen_update",
@@ -115,8 +115,7 @@ function onGCSMessage(msg) {
         }
 
         case "selfie_altitude_updated": {
-
-            mShotParams.altitude = msg.altitude;
+            mShotParams.altitude = msg.altitude || 5;
 
             mListener.sendGCSMessage({
                 id: "screen_update",
@@ -133,7 +132,7 @@ function onGCSMessage(msg) {
         }
 
         case "selfie_speed_updated": {
-            mShotParams.speed = msg.speed;
+            mShotParams.speed = msg.speed || 1;
 
             mListener.sendGCSMessage({
                 id: "screen_update",

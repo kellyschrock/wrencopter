@@ -8,9 +8,7 @@ const RAD_FOR_MIN_SPEED = 2.0;
 const RAD_FOR_MAX_SPEED = 30.0;
 const MIN_TARGET_DISTANCE = 0.5;
 
-const DIR_NONE = 0;
-const DIR_FWD = 1;
-const DIR_REV = 2;
+const { LocationFlow, DIR_FWD, DIR_REV, DIR_NONE } = require("../lib/LocationFlow");
 
 let ATTRS;
 let Vehicle;
@@ -24,6 +22,7 @@ let mListener;
 
 let mVehicleLocation;
 let mShotRunning = false;
+let mLocationFlow = null;
 
 const mShotParams = {
     orbits: 2,
@@ -38,7 +37,7 @@ let mPath = null;
 let mPathIndex = 0;
 let mDirection = DIR_NONE;
 let mTargetPoint = null;
-let mRoiPoint = null;
+let mROIPoint = null;
 
 const VERBOSE = false;
 function d(str) {
@@ -49,8 +48,6 @@ function d(str) {
 // Public interface
 //
 function init(attrs, listener) {
-    d(`init()`);
-
     ATTRS = attrs;
     WorkerUI = attrs.api.WorkerUI;
     Vehicle = attrs.api.Vehicle;
@@ -59,6 +56,19 @@ function init(attrs, listener) {
     MathUtils = attrs.api.MathUtils;
 
     mListener = listener;
+
+    mLocationFlow = new LocationFlow({
+        onComplete: function () {
+            // Send the next path segment
+            mListener.onShotMessage(SHOT_ID, "Path complete");
+        },
+
+        onLocation: function (where, index, count) {
+            // d(`onLocation(): send ${JSON.stringify(where)}`);
+            Vehicle.gotoPoint(where);
+            Vehicle.setROI(mROIPoint);
+        }
+    });
 }
 
 function initShotPanel(body) {
@@ -237,19 +247,22 @@ function onGCSMessage(msg) {
 
         case "spiral_go_reverse": {
             mDirection = DIR_REV;
-            headToNextLocation();
+            mLocationFlow.start(mDirection);
+            // headToNextLocation();
             break;
         }
 
         case "spiral_go_pause": {
             mDirection = DIR_NONE;
-            headToNextLocation();
+            mLocationFlow.pause();
+            // headToNextLocation();
             break;
         }
 
         case "spiral_go_forward": {
             mDirection = DIR_FWD;
-            headToNextLocation();
+            mLocationFlow.start(mDirection);
+            // headToNextLocation();
             break;
         }
 
@@ -312,16 +325,33 @@ function startShot(params) {
     const roiPoint = MathUtils.newCoordFromBearingAndDistance(mVehicleLocation, heading, startRadius);
     d(`heading=${heading}, roiPoint=${JSON.stringify(roiPoint)}`);
 
-    mRoiPoint = roiPoint;
+    mROIPoint = roiPoint;
 
     Vehicle.setROI(roiPoint);
 
-    mPath = generatePath(mRoiPoint, orbits, startRadius, startAlt, endRadius, endAlt, heading);
-    d(`mPath=${JSON.stringify(mPath)}`);
+    mPath = generatePath(mROIPoint, orbits, startRadius, startAlt, endRadius, endAlt, heading);
 
     mPathIndex = 0; // First point in the path is the vehicle's current location.
 
+    const spacing = getSpacingIn(mPath);
+    if (spacing == 0) {
+        return onShotError(`Cannot get point spacing from path`);
+    }
+
+    mLocationFlow
+        .setAutoRewind(true)
+        .setWaitOnVehicle(true)
+        .setPoints(mPath)
+        .setPointSpacing(spacing)
+        .setTargetSpeed(mShotParams.speed)
+        ;
+
     mListener.onShotStartReady(SHOT_ID);
+}
+
+function getSpacingIn(path) {
+    return (path.length >= 2) ?
+        MathUtils.getDistance2D(path[0], path[1]) : 0;
 }
 
 function getVehicleHeading() {
@@ -374,7 +404,7 @@ function stopShot() {
         mListener.onShotStopped(SHOT_ID);
         mShotRunning = false;
         mTargetPoint = null;
-        mRoiPoint = null;
+        mROIPoint = null;
     }
 }
 
@@ -444,7 +474,7 @@ function headToNextLocation() {
     if (mTargetPoint) {
         Vehicle.gotoPoint(mTargetPoint);
         Vehicle.setSpeed(getShotSpeed());
-        Vehicle.setROI(mRoiPoint);
+        Vehicle.setROI(mROIPoint);
     } else {
         const which = (mDirection == DIR_FWD)? "reverse": "forward";
         mListener.onShotMessage(SHOT_ID, `Reached the end. Press ${which} to go the other way.`);
@@ -550,9 +580,9 @@ function testPathGen(state) {
     const roiPoint = MathUtils.newCoordFromBearingAndDistance(state.location, heading, startRadius);
     d(`heading=${heading}, roiPoint=${JSON.stringify(roiPoint)}`);
 
-    mRoiPoint = roiPoint;
+    mROIPoint = roiPoint;
 
-    mPath = generatePath(mRoiPoint, orbits, startRadius, startAlt, endRadius, endAlt, heading);
+    mPath = generatePath(mROIPoint, orbits, startRadius, startAlt, endRadius, endAlt, heading);
     let str = `${state.location.lat}\t${state.location.lng}\tdot3\tred\t0\tVehicle\n`;
     str += `${roiPoint.lat}\t${roiPoint.lng}\tdot3\tgreen\t0\tROI\n`;
     let number = 0;

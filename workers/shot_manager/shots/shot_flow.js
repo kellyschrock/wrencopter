@@ -57,8 +57,6 @@ function init(attrs, listener) {
     mLocationFlow = new LocationFlow({
         onComplete: function() {
             d(`LocationFlow sent onComplete()`);
-            mListener.onShotMessage(SHOT_ID, "Location Flow complete");
-
             Vehicle.setYaw(lastYaw);
         },
 

@@ -80,14 +80,22 @@ function onLoad() {
 
     loadMenuItems();
     loadRCMapping();
+}
 
-    setTimeout(function() {
-        startShellProcess();
-    }, 1000);
+function onEnabledChanged(enabled) {
+    d(`onEnabledChanged(${enabled})`);
 
-    setTimeout(function() {
-        sendStateToLEDs();
-    }, 3000);
+    if(enabled) {
+        setTimeout(function () {
+            startShellProcess();
+        }, 1000);
+
+        setTimeout(function () {
+            sendStateToLEDs();
+        }, 3000);
+    } else {
+        stopShellProcess();
+    }
 }
 
 function selectMenuItem(id) {
@@ -589,6 +597,7 @@ exports.onUnload = onUnload;
 exports.onMavlinkMessage = onMavlinkMessage;
 exports.onGCSMessage = onGCSMessage;
 exports.onScreenEnter = onScreenEnter;
+exports.onEnabledChanged = onEnabledChanged;
 
 function testModeNames() {
     // d(JSON.stringify(mModeNameMap));

@@ -41,8 +41,8 @@
         "id": "take_picture",
         "layout_width": 120,
         "layout_height": 120,
-        "background": "@null",
         "icon": "$(img)/picamera/shutter.png",
+        "background": "@null",
         "scaleType": "fitCenter",
         "on_click": {
           "worker_id": "picamera",
@@ -72,9 +72,9 @@
         "id": "btn_video",
         "layout_width": 120,
         "layout_height": 120,
-        "background": "@null",
         "scaleType": "fitCenter",
         "icon": "$(img)/picamera/record_off.png",
+        "background": "@null",
         "on_click": {
           "worker_id": "picamera",
           "msg_id": "toggle_video"
@@ -173,6 +173,7 @@
             "layout_width": 50,
             "layout_height": 50,
             "icon": "$(img)/picamera/subtract_white.png",
+            "background": "@null",
             "on_click": {
               "worker_id": "picamera", "msg_id": "brightness_down"
             }
@@ -184,8 +185,9 @@
             "layout_height": "wrap_content",
             "text": "50",
             "gravity": "center",
-            "paddingLeft": 12,
-            "paddingRight": 12
+            "paddingLeft": 8,
+            "paddingRight": 8,
+            "minWidth": "40dip"
           },
           {
             "type": "ImageButton",
@@ -193,6 +195,7 @@
             "layout_width": 50,
             "layout_height": 50,
             "icon": "$(img)/picamera/add_white.png",
+            "background": "@null",
             "on_click": {
               "worker_id": "picamera",
               "msg_id": "brightness_up"
@@ -222,6 +225,7 @@
             "layout_width": 50,
             "layout_height": 50,
             "icon": "$(img)/picamera/subtract_white.png",
+            "background": "@null",
             "on_click": {
               "worker_id": "picamera", "msg_id": "zoom_out"
             }
@@ -233,8 +237,9 @@
             "layout_height": "wrap_content",
             "text": "0",
             "gravity": "center",
-            "paddingLeft": 12,
-            "paddingRight": 12
+            "paddingLeft": 8,
+            "paddingRight": 8,
+            "minWidth": "40dip"
           },
           {
             "type": "ImageButton",
@@ -242,6 +247,7 @@
             "layout_width": 50,
             "layout_height": 50,
             "icon": "$(img)/picamera/add_white.png",
+            "background": "@null",
             "on_click": { "worker_id": "picamera", "msg_id": "zoom_in" }
           }
         ]
@@ -268,6 +274,7 @@
             "layout_width": 50,
             "layout_height": 50,
             "icon": "$(img)/picamera/subtract_white.png",
+            "background": "@null",
             "on_click": {
               "worker_id": "picamera", "msg_id": "focus_down"
             }
@@ -279,8 +286,9 @@
             "layout_height": "wrap_content",
             "text": "0",
             "gravity": "center",
-            "paddingLeft": 12,
-            "paddingRight": 12
+            "paddingLeft": 8,
+            "paddingRight": 8,
+            "minWidth": "40dip"
           },
           {
             "type": "ImageButton",
@@ -288,6 +296,7 @@
             "layout_width": 50,
             "layout_height": 50,
             "icon": "$(img)/picamera/add_white.png",
+            "background": "@null",
             "on_click": {
               "worker_id": "picamera",
               "msg_id": "focus_up"

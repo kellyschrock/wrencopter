@@ -11,8 +11,8 @@
         "layout_height": "match_parent",
         "orientation": "vertical",
         "gravity": "center",
-        "padding": 40,
-        "background": "#66000000",
+        "padding": 50,
+        "background": "#44000000",
         "children": [ 
             {
                 "type": "LinearLayout",
@@ -20,7 +20,7 @@
                 "layout_height": "match_parent",
                 "orientation": "vertical",
                 "padding": "12dip",
-                "background": "#dd000000",
+                "background": "#aa000000",
                 "children": [
                     {
                         "type": "TextView",
@@ -61,7 +61,7 @@
                                 "name": "selected_shot",
                                 "layout_width": "0dip",
                                 "layout_height": "match_parent",
-                                "layout_weight": 0.2,
+                                "layout_weight": 0.6,
                                 "minWidth": "80",
                                 "minHeight": "60",
                                 "adapter": {
@@ -74,7 +74,8 @@
                                         "subtext": {
                                             "textColor": "white",
                                             "gravity": "left",
-                                            "visibility": "gone"
+                                            "visibility": "visible",
+                                            "text": "Hey stupid"
                                         }
                                     },
                                     "items": [
