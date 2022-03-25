@@ -23,9 +23,6 @@ let api = null;
 let mConfig = {};
 let lastHeartbeatTime = 0;
 
-function getMediaPath() { return mConfig.media_path || DEF_MEDIA_PATH; }
-function getMediaServerPort() { return mConfig.media_server_port || DEF_MEDIA_SERVER_PORT; }
-
 function d(str) {
     ATTRS.log(ATTRS.id, str);
 }
@@ -33,6 +30,29 @@ function d(str) {
 function e(str) {
     console.error(`${ATTRS.id}: ${str}`);
 }
+
+function getMediaFiles() {
+    const files = [];
+    const dir = getMediaPath();
+    const filenames = fs.readdirSync(dir);
+    filenames.forEach((dirent) => {
+        const filename = dirent;
+
+        if (filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".mp4")) {
+            const stats = fs.statSync(path.join(dir, filename));
+
+            const when = new Date(stats.mtime).getTime();
+            files.push({ name: filename, size: stats.size, time: when });
+        }
+    });
+
+    // Sort the list newest-first.
+    files.sort((a, b) => { return b.time - a.time; });
+    return files;
+}
+
+function getMediaPath() { return mConfig.media_path || DEF_MEDIA_PATH; }
+function getMediaServerPort() { return mConfig.media_server_port || DEF_MEDIA_SERVER_PORT; }
 
 const vehicleEventListener = {
     onDroneEvent: (event, extras) => {
@@ -176,25 +196,8 @@ function onGCSMessage(msg) {
         }
 
         case "retrieve_files": {
-            const files = [];
-            const dir = getMediaPath();
-            const filenames = fs.readdirSync(dir);
-            filenames.forEach((dirent) => {
-                const filename = dirent;
-
-                if(filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".mp4")) {
-                    const stats = fs.statSync(path.join(dir, filename));
-
-                    const when = new Date(stats.mtime).getTime();
-                    files.push({ name: filename, size: stats.size, time: when });
-                }
-            });
-
-            // Sort the list newest-first.
-            files.sort((a, b) => { return b.time - a.time; });
-
             result.ok = true;
-            result.data = { files: files };
+            result.data = { files: getMediaFiles() };
             break;
         }
 
@@ -249,6 +252,29 @@ function onGCSMessage(msg) {
             });
 
             result.ok = true;
+            break;
+        }
+
+        case "open_media": {
+            sendMediaDialogMessage();
+            break;
+        }
+
+        case "do_media_download": {
+            switch(msg.dialog_id) {
+                case "dlg_media_download": {
+                    const mimeType = msg.item_id.includes(".mp4")? "video/mp4": "image/jpeg";
+
+                    ATTRS.sendGCSMessage(ATTRS.id, {
+                        id: "content_download",
+                        mime_type: mimeType,
+                        filename: msg.item_id,
+                        msg_id: "get_media_content",
+                        content_id: msg.item_id
+                    });
+                    break;
+                }
+            }
             break;
         }
 
@@ -330,6 +356,15 @@ function onScreenEnter(screen) {
     switch(screen) {
         case api.WorkerUI.Const.SCREEN_FLIGHT: {
             const body = api.WorkerUI.loadLayout(__dirname, api.WorkerUI.Const.PANEL_CAMERA);
+
+            const WorkerUI = ATTRS.api.WorkerUI;
+            const focus = WorkerUI.findViewById(body, "txt_focus", true);
+            const zoom = WorkerUI.findViewById(body, "txt_zoom", true);
+            const brightness = WorkerUI.findViewById(body, "txt_brightness", true);
+
+            if(focus) focus.text = camera.focus();
+            if(zoom) zoom.text = camera.zoom();
+            if(brightness) brightness.text = camera.brightness();
 
             return (body)? {
                 screen_id: screen, 
@@ -424,17 +459,36 @@ function sendSettingsDialogMessage() {
     }
 }
 
-function sendEVCompUpdate(evcomp) {
-    ATTRS.sendGCSMessage(ATTRS.id, {
-        id: "screen_update",
-        screen_id: "flight",
-        panel_id: "camera_panel",
-        values: {
-            txt_evcomp: {
-                text: evcomp.toFixed(2)
-            }
+function sendMediaDialogMessage() {
+
+    const files = getMediaFiles();
+
+    function toJSONArray(files) {
+        const out = [];
+        
+        for(const file of files) {
+            out.push({
+                id: file.name, text: file.name, msg_id: "do_media_download"
+            });
         }
-    });
+
+        return out;
+    }
+
+    if(files && files.length) {
+        ATTRS.sendGCSMessage(ATTRS.id, {
+            id: "content_dialog",
+            dialog_id: "dlg_media_download",
+            title: "Media",
+            text: "Pick an image or video to download.",
+            buttons: [
+                { id: "close", text: "Close", msg_id: "close_dialog" }
+            ],
+            list_items: toJSONArray(files)
+        });    
+    } else {
+        ATTRS.api.WorkerUI.sendToastMessage(ATTRS, "No media to download.");
+    }
 }
 
 function onBroadcastRequest(msg) {
@@ -566,6 +620,29 @@ function sendCameraHeartbeat(sysid) {
     }
 }
 
+function onContentDownload(msgId, contentId) {
+    d(`onContentDownload(${msgId}, ${contentId})`);
+
+    switch (msgId) {
+        case "get_media_content": {
+            const filename = path.join(getMediaPath(), contentId);
+            d(`filename=${filename}`);
+
+            try {
+                const content = fs.readFileSync(filename);
+                return content;
+            } catch(ex) {
+                sendCameraError(`Cannot retrieve file: ${ex.message}`);
+                return null;
+            }
+        }
+
+        default: {
+            return null;
+        }
+    }
+}
+
 exports.getAttributes = getAttributes;
 exports.loop = loop;
 exports.onLoad = onLoad;
@@ -577,3 +654,4 @@ exports.onScreenExit = onScreenExit;
 exports.onImageDownload = onImageDownload;
 exports.onBroadcastRequest = onBroadcastRequest;
 exports.getFeatures = getFeatures;
+exports.onContentDownload = onContentDownload;

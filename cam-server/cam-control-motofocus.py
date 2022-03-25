@@ -105,7 +105,7 @@ def handleConfigInput(str):
 		elif str.startswith("zoom"):
 			zoom_value = int(str[5:]) / 10.0
 			if zoom_value < 1.0:
-				camera.zoom = (zoom_value, zoom_value, 1.0 - zoom_value, 1.0 - zoom_value)
+				camera.zoom = (zoom_value / 2.0, zoom_value / 2.0, 1.0 - zoom_value, 1.0 - zoom_value)
 
 
 def handleCommandInput(str):

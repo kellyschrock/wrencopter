@@ -8,35 +8,6 @@
     "background": "#88000000",
     "children": [
       {
-        "type": "TextView",
-        "layout_width": "wrap_content",
-        "layout_height": "wrap_content",
-        "text": "Camera",
-        "gravity": "center",
-        "textColor": "white",
-        "textSize": 18,
-        "paddingBottom": 8,
-        "background": "@null",
-        "visibility": "gone"
-      },
-      {
-        "type": "Space",
-        "layout_width": "match_parent",
-        "layout_height": 2,
-        "background": "white"
-      },
-      {
-        "type": "TextView",
-        "layout_width": "wrap_content",
-        "layout_height": "wrap_content",
-        "text": "Picture",
-        "gravity": "center",
-        "textColor": "white",
-        "textSize": 15,
-        "paddingBottom": 8,
-        "background": "@null"
-      },
-      {
         "type": "ImageButton",
         "id": "take_picture",
         "layout_width": 120,
@@ -50,12 +21,6 @@
         }
       },
       {
-        "type": "Space",
-        "layout_width": "match_parent",
-        "layout_height": 2,
-        "background": "white"
-      },
-      {
         "type": "TextView",
         "layout_width": "wrap_content",
         "layout_height": "wrap_content",
@@ -65,7 +30,8 @@
         "textSize": 15,
         "paddingBottom": 8,
         "paddingTop": 8,
-        "background": "@null"
+        "background": "@null",
+        "visibility": "gone"
       },
       {
         "type": "ImageButton",
@@ -79,6 +45,12 @@
           "worker_id": "picamera",
           "msg_id": "toggle_video"
         }
+      },
+      {
+        "type": "Space",
+        "layout_width": "match_parent",
+        "layout_height": 2,
+        "background": "white"
       },
       {
         "type": "TextView",
@@ -137,18 +109,17 @@
       },
       {
           "type": "ImageButton",
-          "id": "btn_cam_settings",
+          "id": "btn_media",
           "layout_width": "wrap_content",
           "layout_height": "wrap_content",
           "layout_marginTop": "20dip",
           "minWidth": "34dip",
           "minHeight": "34dip",
           "scaleType": "fitXY",
-          "icon": "$(img)/picamera/ic_settings.png",
-          "background": "#00ffffff",
-          "visibility": "gone",
+          "icon": "$(img)/picamera/ic_media.png",
+          "background": "@null",
           "on_click": {
-              "worker_id": "picamera", "msg_id": "open_settings"
+              "worker_id": "picamera", "msg_id": "open_media"
           }
       },
       {

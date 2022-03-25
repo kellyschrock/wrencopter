@@ -23,7 +23,7 @@ const MAX_FOCUS = 1023;
 const FOCUS_STEP = 50
 
 const MIN_ZOOM = 0;
-const MAX_ZOOM = 5;
+const MAX_ZOOM = 10;
 const ZOOM_STEP = 1;
 
 function d(str) { console.log(`camera: ${str}`); }
