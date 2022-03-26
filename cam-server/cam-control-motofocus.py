@@ -74,43 +74,49 @@ def handleConfigInput(str):
 
 	camera = take_picture.camera
 
-	if camera is not None:
-		if str.startswith("contrast"):
-			camera.contrast = int(str[9:])
-		elif str.startswith("saturation"):
-			camera.saturation = int(str[11:])
-		elif str.startswith("brightness"):
-			camera.brightness = int(str[11:])
-		elif str.startswith("sharpness"):
-			camera.sharpness = int(str[10:])
-		elif str.startswith("image_effect"):
-			camera.image_effect = str[13:]
-		elif str.startswith("exposure_mode"):
-			camera.exposure_mode = str[14:]
-		elif str.startswith("meter_mode"):
-			camera.meter_mode = str[11:]
-		elif str.startswith("awb"):
-			camera.awb_mode = str[4:]
-		elif str.startswith("iso"):
-			camera.iso = int(str[4:].strip())
-		elif str.startswith("focus"):
-			focus_val = int(str[6:].strip())
-			arducam_vcm.vcm_write(focus_val)
-		elif str.startswith("drc"): # off, low, medium, high
-			camera.drc_strength = str[4:]
-		elif str.startswith("hflip"):
-			camera.hflip = (str[6:] == "true")
-		elif str.startswith("vflip"):
-			camera.vflip = (str[6:] == "true")
-		elif str.startswith("zoom"):
-			zoom_value = int(str[5:]) / 10.0
-			if zoom_value < 1.0:
-				camera.zoom = (zoom_value / 2.0, zoom_value / 2.0, 1.0 - zoom_value, 1.0 - zoom_value)
+	try:
+		if camera is not None:
+			if str.startswith("contrast"):
+				camera.contrast = int(str[9:])
+			elif str.startswith("saturation"):
+				camera.saturation = int(str[11:])
+			elif str.startswith("brightness"):
+				camera.brightness = int(str[11:])
+			elif str.startswith("sharpness"):
+				camera.sharpness = int(str[10:])
+			elif str.startswith("image_effect"):
+				camera.image_effect = str[13:]
+			elif str.startswith("exposure_mode"):
+				camera.exposure_mode = str[14:]
+			elif str.startswith("meter_mode"):
+				camera.meter_mode = str[11:]
+			elif str.startswith("awb"):
+				camera.awb_mode = str[4:]
+			elif str.startswith("iso"):
+				camera.iso = int(str[4:].strip())
+			elif str.startswith("focus"):
+				focus_val = int(str[6:].strip())
+				arducam_vcm.vcm_write(focus_val)
+			elif str.startswith("drc"): # off, low, medium, high
+				camera.drc_strength = str[4:]
+			elif str.startswith("hflip"):
+				camera.hflip = (str[6:] == "true")
+			elif str.startswith("vflip"):
+				camera.vflip = (str[6:] == "true")
+			elif str.startswith("zoom"):
+				zoom_value = float(str[5:]) / 10.0
+				if zoom_value < 1.0:
+					camera.zoom = (zoom_value / 2.0, zoom_value / 2.0, 1.0 - zoom_value, 1.0 - zoom_value)
+	except Exception as e:
+		say(e)
 
 
 def handleCommandInput(str):
 	global _camServerRun
 	global take_picture
+
+	if take_picture is None:
+		return
 
 	if str == "picture":
 		take_picture.trigger()
@@ -130,6 +136,7 @@ def handleCommandInput(str):
 			k = kv[0:vi]
 			say("k=" + k + " v=" + kv[vi+1:])
 			take_picture.exif_tags[k] = kv[vi+1:]
+
 
 def cameraServer():
 	camera = picamera.PiCamera()

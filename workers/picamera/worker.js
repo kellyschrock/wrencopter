@@ -159,6 +159,18 @@ function onMavlinkMessage(msg) {
     ATTRS.api.Vehicle.onMavlinkMessage(msg);
 }
 
+const ZOOM_TEST_INTERVAL = 50;
+let mCurrZoom = 0;
+
+function doZoomIn() {
+    if(mCurrZoom < 9.9) {
+        mCurrZoom += 0.05;
+        camera.setZoom(mCurrZoom);
+        sendZoomUpdate(camera.zoom());
+        setTimeout(doZoomIn, ZOOM_TEST_INTERVAL);
+    }
+}
+
 // Called when the GCS sends a message to this worker. Message format is 
 // entirely dependent on agreement between the FCS and worker implementation.
 function onGCSMessage(msg) {
@@ -169,6 +181,14 @@ function onGCSMessage(msg) {
     };
 
     switch(msg.id) {
+        case "zoom_test": {
+            camera.setZoom(mCurrZoom = 0);
+
+            setTimeout(doZoomIn, 1000);
+            break;
+        }
+
+
         case "take_picture": {
             camera.takePicture(function(err) {
                 if(err) {

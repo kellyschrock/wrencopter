@@ -8,6 +8,18 @@
     "background": "#88000000",
     "children": [
       {
+        "type": "Button",
+        "id": "btn_zoom_test",
+        "layout_width": "wrap_content",
+        "layout_height": "wrap_content",
+        "text": "Zoom Test",
+        "visibility": "gone",
+        "on_click": {
+          "worker_id": "picamera",
+          "msg_id": "zoom_test"
+        }
+      },
+      {
         "type": "ImageButton",
         "id": "take_picture",
         "layout_width": 120,

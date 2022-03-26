@@ -216,8 +216,8 @@ exports.focus = function () {
     return `${((mFocus / MAX_FOCUS) * 100).toFixed(0)}%`;
 }
 
-exports.zoomIn = function() {
-    mZoom += ZOOM_STEP;
+exports.zoomIn = function(value) {
+    mZoom += value || ZOOM_STEP;
     if(mZoom > MAX_ZOOM) {
         mZoom = MAX_ZOOM;
     }
@@ -234,8 +234,17 @@ exports.zoomOut = function() {
     sendFifoConfig(`zoom ${mZoom}`);
 }
 
+exports.setZoom = function(value) {
+    mZoom = value;
+    sendFifoConfig(`zoom ${mZoom}`);
+}
+
+exports.isFullZoom = function() {
+    return (mZoom >= MAX_ZOOM - 0.1);
+}
+
 exports.zoom = function() {
-    return mZoom;
+    return mZoom.toFixed(0);
 }
 
 exports.init = init;
