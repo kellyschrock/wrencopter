@@ -66,6 +66,12 @@ function init(attrs, listener) {
         },
 
         onLocation: function (where, index, count) {
+            if(where.totalYawAngle) {
+                const speed = getShotSpeed();
+                // This is degrees/second, will be converted to rad/s in Vehicle.gotoPoint().
+                where.yaw_speed = (where.totalYawAngle * RUN_POINT_DIST * speed);
+            }
+
             // d(`onLocation(): send ${JSON.stringify(where)}`);
             Vehicle.gotoPoint(where);
         }
@@ -127,7 +133,7 @@ function onGCSMessage(msg) {
 
         // User hit "Add Point"
         case "mpcc_add_point": {
-            addSavePoint(msg);
+            onAddSavePoint(msg);
             break;
         }
 
@@ -236,21 +242,33 @@ function setButtonStates() {
     });
 }
 
-function addSavePoint(msg) {
+function onAddSavePoint(msg) {
     d(`addSavePoint(${JSON.stringify(msg)})`);
 
     if(!mVehicleLocation) return mListener.onShotMessage(SHOT_ID, `Add point: No vehicle location!`);
 
     const heading = getVehicleHeading();
     const point = {
-        where: mVehicleLocation,
+        where: {
+            lat: mVehicleLocation.lat,
+            lng: mVehicleLocation.lng,
+            alt: mVehicleLocation.alt
+        },
         heading: heading,
         gimbal: getGimbalAngle()
     };
 
     mSavedPoints.push(point);
+
+    if(mSavedPoints.length > 1) {
+        const last = mSavedPoints[mSavedPoints.indexOf(point) - 1];
+        const dist = MathUtils.getDistance2D(point.where, last.where);
+        mListener.onShotMessage(SHOT_ID, `Point added ${dist.toFixed(0)} meters from last point`);
+    } else {
+        mListener.onShotMessage(SHOT_ID, "Point Added", true);
+    }
+
     setButtonStates();
-    mListener.onShotMessage(SHOT_ID, "Point Added", true);
 }
 
 function onAddPointsDone(msg) {
@@ -267,13 +285,21 @@ function onStartShotClick(msg) {
 function onForwardClick(msg) {
     mListener.onShotMessage(SHOT_ID, "Forward");
     mDirection = DIR_FWD;
-    mLocationFlow.start(mDirection);
+    try {
+        mLocationFlow.start(mDirection);
+    } catch(ex) {
+        onShotError(ex.message);
+    }
 }
 
 function onReverseClick(msg) {
     mListener.onShotMessage(SHOT_ID, "Reverse");
     mDirection = DIR_REV;
-    mLocationFlow.start(mDirection);
+    try {
+        mLocationFlow.start(mDirection);
+    } catch (ex) {
+        onShotError(ex.message);
+    }
 }
 
 function onPauseClick(msg) {
@@ -324,7 +350,7 @@ function doGenerateRunPoints() {
         mPathIndex = mRunPoints.length - 1;
 
         // mListener.onShotMessage(SHOT_ID, `Generated ${mRunPoints.length} points from ${mSavedPoints.length} saved points`);
-        mListener.onShotMessage(SHOT_ID, `Fly near the first location and press Start. Or, press Reverse to play backward to the beginning.`);
+        mListener.onShotMessage(SHOT_ID, `Fly near the first location and press Start. Or, press Start and then Reverse to play backward to the beginning.`);
 
         mLocationFlow
             .setAutoRewind(false)
@@ -335,7 +361,7 @@ function doGenerateRunPoints() {
             ;
 
     } catch(ex) {
-        mListener.onShotError(SHOT_ID, ex.message);
+        onShotError(`Generate points: ${ ex.message }`);
     }
 }
 
@@ -355,12 +381,15 @@ function generateRunPoints(savedPoints) {
         const there = next && next.where;
 
         if(there) {
+            const totalYawAngle = Math.abs(point.heading - next.heading);
+
             output.push({
                 lat: here.lat,
                 lng: here.lng,
                 alt: here.alt,
                 yaw: point.heading,
-                gimbal: point.gimbal
+                gimbal: point.gimbal,
+                totalYawAngle: totalYawAngle
             });
 
             // Point from here to there.
@@ -405,7 +434,8 @@ function generateRunPoints(savedPoints) {
                     lng: pt.lng,
                     alt: currAlt,
                     yaw: currYaw,
-                    gimbal: currGimbal
+                    gimbal: currGimbal,
+                    totalYawAngle: totalYawAngle
                 };
 
                 // d(`gen=${JSON.stringify(gen)}`);
@@ -415,13 +445,15 @@ function generateRunPoints(savedPoints) {
                 startPoint = pt;
             }
 
-            output.push({
-                lat: there.lat,
-                lng: there.lng,
-                alt: there.alt,
-                yaw: next.heading,
-                gimbal: next.gimbal
-            });
+            // TODO: Not sure this is necessary, since this point would be pushed on the next iteration.
+            // output.push({
+            //     lat: there.lat,
+            //     lng: there.lng,
+            //     alt: there.alt,
+            //     yaw: next.heading,
+            //     gimbal: next.gimbal,
+            //     totalYawAngle: totalYawAngle
+            // });
 
         } else {
             // "here" is the last point. Everything's been filled up to here, so just make the final point in the list.
@@ -513,8 +545,6 @@ function isRunning() {
 }
 
 function onVehicleMoved(where) {
-    // d(`onVehicleMoved(): where=${JSON.stringify(where)}`);
-
     if(!where) {
         return onShotError("Moved: No vehicle location");
     }
@@ -524,6 +554,8 @@ function onVehicleMoved(where) {
     } else {
         mVehicleLocation = Object.assign({}, where);
     }
+
+    // d(`onVehicleMoved(): where=${JSON.stringify(mVehicleLocation)}`);
 }
 
 function onPanelOpened(body) {
@@ -562,85 +594,10 @@ function onEnteredGuidedMode(mode) {
 let timerHandle = null;
 let timerInterval = 100; // ms
 
-function pushLocation() {
-    const next = nextRunPoint();
-    if(next) {
-        Vehicle.gotoPoint(next);
-        Vehicle.setYaw(next.yaw);
-        // TODO: Set gimbal angle to next.gimbal
-    } else {
-        mListener.onShotMessage(SHOT_ID, "Path complete");
-        clearInterval(timerHandle);
-        timerHandle = null;
-    }
-}
-
-function runOnPath(dir) {
-    if(timerHandle) {
-        clearInterval(timerHandle);
-    }
-
-    mDirection = dir;
-
-    timerHandle = setInterval(pushLocation, timerInterval);
-}
-
-// Starts toward the next target location
-function headToNextRunPoint() {
-    mTargetPoint = nextRunPoint();
-    d(`headToNextRunPoint(): mTargetPoint=${JSON.stringify(mTargetPoint)}`);
-
-    if (mTargetPoint) {
-        // This should affect altitude as well as lat/lng
-        Vehicle.gotoPoint(mTargetPoint);
-        // Do yaw
-        Vehicle.setYaw(mTargetPoint.yaw);
-        // TODO: Do gimbal angle too
-    } else {
-        mListener.onShotMessage(SHOT_ID, (mDirection == DIR_NONE) ? "Paused" : "Path complete");
-    }
-}
-
 function getShotSpeed() {
     let speed = mShotParams.speed || 2;
     if(isNaN(speed)) speed = 1;
     return speed;
-}
-
-function nextRunPoint() {
-    if(mRunPoints.length == 0) return null;
-
-    let result = null;
-
-    switch(mDirection) {
-        case DIR_FWD: {
-            if(mPathIndex < mRunPoints.length) {
-                result = mRunPoints[mPathIndex++];
-            }
-            
-            break;
-        }
-
-        case DIR_REV: {
-            if(mPathIndex >= mRunPoints.length) {
-                --mPathIndex;
-            }
-
-            if(mPathIndex > 0) {
-                result = mRunPoints[mPathIndex--];
-            }
-
-            break;
-        }
-
-        default: {
-            // DIR_NONE
-            result = null;
-            break;
-        }
-    }
-
-    return result;
 }
 
 function yawToHeading(yaw) {

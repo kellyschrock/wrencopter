@@ -170,7 +170,8 @@
             "gravity": "center",
             "paddingLeft": 8,
             "paddingRight": 8,
-            "minWidth": "40dip"
+            "minWidth": "40dip",
+            "on_click": { "worker_id": "picamera", "msg_id": "brightness_reset" }
           },
           {
             "type": "ImageButton",
@@ -222,7 +223,8 @@
             "gravity": "center",
             "paddingLeft": 8,
             "paddingRight": 8,
-            "minWidth": "40dip"
+            "minWidth": "40dip",
+            "on_click": { "worker_id": "picamera", "msg_id": "zoom_reset" }
           },
           {
             "type": "ImageButton",
@@ -271,7 +273,8 @@
             "gravity": "center",
             "paddingLeft": 8,
             "paddingRight": 8,
-            "minWidth": "40dip"
+            "minWidth": "40dip",
+            "on_click": { "worker_id": "picamera", "msg_id": "focus_reset" }
           },
           {
             "type": "ImageButton",

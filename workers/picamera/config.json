@@ -1,4 +1,8 @@
 {
     "media_path": "/home/pi/media",
-    "media_server_port": 5595
+    "media_server_port": 5595,
+    "rc": {
+        "control_channel": 6,
+        "take_picture_pwm": 2006
+    }
 }

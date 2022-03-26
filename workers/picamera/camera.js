@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require("fs");
+const path = require("path");
 
 const CMD_FIFO = "/tmp/cam_control.fifo";
 const CFG_FIFO = "/tmp/cam_config.fifo";
@@ -13,13 +14,16 @@ var mEvComp = 0.0;
 let mBrightness = 50;
 let mFocus = 0; // far focus
 let mZoom = 0; // no zoom
+let mLastLocationSet = 0;
 
 const MIN_BRIGHTNESS = 10;
 const MAX_BRIGHTNESS = 100;
+const DEF_BRIGHTNESS = 50;
 const BRIGHTNESS_STEP = 10;
 
 const MIN_FOCUS = 0;
 const MAX_FOCUS = 1023;
+const DEF_FOCUS = MIN_FOCUS;
 const FOCUS_STEP = 50
 
 const MIN_ZOOM = 0;
@@ -49,11 +53,12 @@ function setLocation(where) {
     if(!where.lat) return;
     if(!where.lng) return;
 
-    sendFifoCommand(`exif:GPS.GPSLatitude=${formatLatitude(where.lat)}`);
-    sendFifoCommand(`exif:GPS.GPSLongitude=${formatLongitude(where.lng)}`);
+    const now = Date.now();
 
-    if(where.altAMSL) {
-        sendFifoCommand(`exif:GPS.GPSAltitude=${formatAltitude(where.altAMSL)}`);
+    if((now - mLastLocationSet) > 500) {
+        const str = `${where.lat},${where.lng},${where.altMSL}`;
+        sendFifoCommand(`location=${str}`);
+        mLastLocationSet = now;
     }
 }
 
@@ -61,8 +66,9 @@ function sendFifoCommand(command) {
     // d(`sendToFifo(${command})`);
 
     const { exec } = require("child_process");
+    const script = path.join(__dirname, "writefifo.sh")
 
-    exec(`echo ${command} > ${CMD_FIFO}`, (err, stdout, stderr) => {
+    exec(`${script} "${command}" ${CMD_FIFO}`, (err, stdout, stderr) => {
         if(err) {
             return d(`Error writing FIFO: ${err.message}`);
         }
@@ -77,8 +83,9 @@ function sendFifoConfig(str) {
     d(`sendFifoConfig(${str})`);
 
     const { exec } = require("child_process");
+    const script = path.join(__dirname, "writefifo.sh")
 
-    exec(`echo ${str} > ${CFG_FIFO}`, (err, stdout, stderr) => {
+    exec(`${script} "${str}" ${CFG_FIFO}`, (err, stdout, stderr) => {
         if (err) {
             return d(`Error writing FIFO: ${err.message}`);
         }
@@ -188,6 +195,11 @@ exports.brightnessDown = function() {
     }
 };
 
+exports.resetBrightness = function() {
+    mBrightness = DEF_BRIGHTNESS;
+    sendFifoConfig(`brightness ${mBrightness}`);
+}
+
 exports.brightness = function() { return mBrightness; }
 
 exports.doVFlip = function(doit) {
@@ -209,6 +221,11 @@ exports.focusDown = function() {
         mFocus = MIN_FOCUS;
     }
 
+    sendFifoConfig(`focus ${mFocus}`);
+}
+
+exports.resetFocus = function() {
+    mFocus = DEF_FOCUS;
     sendFifoConfig(`focus ${mFocus}`);
 }
 
@@ -236,6 +253,11 @@ exports.zoomOut = function() {
 
 exports.setZoom = function(value) {
     mZoom = value;
+    sendFifoConfig(`zoom ${mZoom}`);
+}
+
+exports.resetZoom = function() {
+    mZoom = MIN_ZOOM;
     sendFifoConfig(`zoom ${mZoom}`);
 }
 

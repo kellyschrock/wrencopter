@@ -16,7 +16,7 @@ const ATTRS = {
     // Does this worker want to loop?
     looper: false,
     // Mavlink messages we're interested in
-    mavlinkMessages: []
+    mavlinkMessages: ["HEARTBEAT", "GPS_RAW_INT", "COMMAND_LONG", "DIGICAM_CONTROL"]
 };
 
 let api = null;
@@ -65,6 +65,31 @@ const vehicleEventListener = {
     }
 };
 
+const mRCListener = {
+    onRCChannelsChanged: function (rc) {
+        // d(`onRCChannelsChanged(): ${JSON.stringify(rc)}`);
+
+        if(mConfig && mConfig.rc) {
+            const channel = mConfig.rc.control_channel;
+            const picturePWM = mConfig.rc.take_picture_pwm || 0;
+            const videoPWM = mConfig.rc.video_toggle_pwm || 0;
+            // d(`channel=${channel} picturePWM=${picturePWM} videoPWM=${videoPWM}`);
+
+            if (channel) {
+                const value = rc[channel.toString()];
+                // d(`Update on channel ${channel}: ${value}`);
+
+                if (value == picturePWM) {
+                    onGCSMessage({ id: "take_picture" });
+                } else if(value == videoPWM) {
+                    onGCSMessage({ id: "toggle_video" });
+                }
+            }
+        }
+    }
+};
+
+
 /*
 Return an object describing this worker. If looper is true, this module must expose a loop() export.
 */
@@ -82,8 +107,28 @@ function onLoad() {
     api = ATTRS.api;
     const messages = ATTRS.api.Vehicle.getVehicleMavlinkMessages();
 
+    messages.push("HEARTBEAT");
+    messages.push("GPS_RAW_INT");
     messages.push("COMMAND_LONG");
     messages.push("CAMERA_FEEDBACK");
+    messages.push("DIGICAM_CONTROL");
+
+    // If we have RCInputs, listen to those messages 
+    if (ATTRS.api.RCInputs) {
+        const rcMessages = ATTRS.api.RCInputs.getMavlinkMessages();
+
+        for (const m of rcMessages) {
+            messages.push(m);
+        }
+
+        d(`Add RCInputs messages: ${messages}`);
+
+        if(ATTRS.api.RCInputs.addEventListener) {
+            ATTRS.api.RCInputs.addEventListener(mRCListener);
+        } else {
+            d(`No RC addEventListener()?`);
+        }
+    }
 
     ATTRS.api.Vehicle.addEventListener(vehicleEventListener);
     ATTRS.subscribeMavlinkMessages(ATTRS.id, messages);
@@ -120,14 +165,33 @@ function onUnload() {
 
 // Called when a Mavlink message arrives
 function onMavlinkMessage(msg) {
+    // d(`onMavlinkMessage(): ${JSON.stringify(msg)}`);
     // d(`onMavlinkMessage(): ${msg.name}`);
 
     if(!msg) return;
     if(!msg.name) return;
 
+    if (ATTRS.api.RCInputs) {
+        ATTRS.api.RCInputs.onMavlinkMessage(msg);
+    }
+
     switch(msg.name) {
         case "HEARTBEAT": {
             sendCameraHeartbeat(msg.header.srcSystem);
+            break;
+        }
+
+        case "DIGICAM_CONTROL": {
+            if(msg.shot) {
+                camera.takePicture(function (err) {
+                    if (err) {
+                        sendCameraError(err.message || err);
+                    } else {
+                        // sendPhotoConfirmation();
+                    }
+                });
+            }
+
             break;
         }
 
@@ -139,10 +203,15 @@ function onMavlinkMessage(msg) {
                             if(err) {
                                 sendCameraError(err.message || err);
                             } else {
-                                d(`Took picture`);
+                                // sendPhotoConfirmation();
                             }
                         });
                     }
+                    break;
+                }
+
+                case ATTRS.api.Mavlink.MAV_CMD_REQUEST_MESSAGE: {
+                    d(`OH YEAH: ${msg.name}`);
                     break;
                 }
             }
@@ -151,7 +220,7 @@ function onMavlinkMessage(msg) {
 
         // This is useful.
         // case "CAMERA_FEEDBACK": {
-        //     d(JSON.stringify(msg));
+        //     d(msg.name);
         //     break;
         // }
     }
@@ -330,6 +399,12 @@ function onGCSMessage(msg) {
             break;
         }
 
+        case "brightness_reset": {
+            camera.resetBrightness();
+            sendBrightnessUpdate(camera.brightness());
+            break;
+        }
+
         case "focus_up": {
             camera.focusUp();
             sendFocusUpdate(camera.focus());
@@ -342,6 +417,12 @@ function onGCSMessage(msg) {
             break;
         }
 
+        case "focus_reset": {
+            camera.resetFocus();
+            sendFocusUpdate(camera.focus());
+            break;
+        }
+
         case "zoom_in": {
             camera.zoomIn();
             sendZoomUpdate(camera.zoom());
@@ -350,6 +431,12 @@ function onGCSMessage(msg) {
 
         case "zoom_out": {
             camera.zoomOut();
+            sendZoomUpdate(camera.zoom());
+            break;
+        }
+
+        case "zoom_reset": {
+            camera.resetZoom();
             sendZoomUpdate(camera.zoom());
             break;
         }
@@ -470,6 +557,9 @@ function sendUpdateRecordingStatus(recording) {
             btn_evcomp_sub: { enabled: !recording }
         }
     });
+
+    const sayThis = (recording)? "Video Start": "Video Stop";
+    ATTRS.api.WorkerUI.sendSpeechMessage(ATTRS, sayThis, ATTRS.api.WorkerUI.SpeechType.TEXT);
 }
 
 function sendSettingsDialogMessage() {
@@ -481,6 +571,7 @@ function sendSettingsDialogMessage() {
 
 function sendMediaDialogMessage() {
 
+    const dir = getMediaPath();
     const files = getMediaFiles();
 
     function toJSONArray(files) {
@@ -507,7 +598,7 @@ function sendMediaDialogMessage() {
             list_items: toJSONArray(files)
         });    
     } else {
-        ATTRS.api.WorkerUI.sendToastMessage(ATTRS, "No media to download.");
+        ATTRS.api.WorkerUI.sendToastMessage(ATTRS, `No media to download in ${dir}`);
     }
 }
 
@@ -620,20 +711,24 @@ function onVehicleMoved(where) {
 function sendCameraHeartbeat(sysid) {
     const now = Date.now();
 
-    if ((now - lastHeartbeatTime) > 4000) {
+    if ((now - lastHeartbeatTime) >= 4000) {
         // d(`sendCameraHeartbeat(${sysid})`);
         const mavlink = ATTRS.api.Mavlink;
 
         const msg = {
             header: {
-                sysid: sysid, compid: mavlink.MAV_COMP_ID_CAMERA
+                sysid: sysid, 
+                compid: mavlink.MAV_COMP_ID_CAMERA
             },
             name: "HEARTBEAT",
             type: mavlink.MAV_TYPE_CAMERA,
+            autopilot: mavlink.MAV_AUTOPILOT_INVALID, // per documentation, supposedly. 
             base_mode: 0,
             custom_mode: 0,
             system_status: 0
         };
+
+        // d(`sendCameraHeartbeat(): ${JSON.stringify(msg)}`);
 
         ATTRS.sendMavlinkMessage(ATTRS.id, msg);
         lastHeartbeatTime = now;

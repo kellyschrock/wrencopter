@@ -124,8 +124,11 @@ def handleCommandInput(str):
 		vi = kv.find("=")
 		if vi >= 0:
 			k = kv[0:vi]
-			say("k=" + k + " v=" + kv[vi+1:])
+			# say("k=" + k + " v=" + kv[vi+1:])
 			take_picture.exif_tags[k] = kv[vi+1:]
+	elif str.startswith("location="):
+		kv = str[len("location")+1:]
+		take_picture.setLocation(kv)
 
 def cameraServer():
 	camera = picamera.PiCamera()
@@ -160,7 +163,7 @@ def cameraServer():
 		camsink.add(take_picture)
 
 		try:
-			camera.start_recording(camsink, format='h264', bitrate=1000000)
+			camera.start_recording(camsink, format='h264', bitrate=10000000)
 
 			while _camServerRun:
 				camera.wait_recording(1)

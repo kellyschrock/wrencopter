@@ -6,6 +6,8 @@ import picamera
 from threading import Thread
 from queue import Queue
 from ctypes import *
+import cv2 #sudo apt-get install python-opencv
+import numpy as py
 
 from shutter import TakePicture
 from video import VideoRecorder
@@ -22,6 +24,61 @@ eventQueue = None
 _camServerRun = True
 _cmdFifoRun = True
 _configFifoRun = True
+
+def focusing(val):
+    arducam_vcm.vcm_write(val)
+
+def sobel(img):
+	img_gray = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
+	img_sobel = cv2.Sobel(img_gray,cv2.CV_16U,1,1)
+	return cv2.mean(img_sobel)[0]
+
+def laplacian(img):
+	img_gray = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
+	img_sobel = cv2.Laplacian(img_gray,cv2.CV_16U)
+	return cv2.mean(img_sobel)[0]
+
+def calculation(camera):
+	rawCapture = PiRGBArray(camera) 
+	camera.capture(rawCapture,format="bgr", use_video_port=True)
+	image = rawCapture.array
+	rawCapture.truncate(0)
+	return laplacian(image)
+
+def autofocus(camera):
+	max_index = 10
+	max_value = 0.0
+	last_value = 0.0
+	dec_count = 0
+	focal_distance = 10
+
+	while True:
+		#Adjust focus
+		focusing(focal_distance)
+		#Take image and calculate image clarity
+		val = calculation(camera)
+		#Find the maximum image clarity
+		if val > max_value:
+			max_index = focal_distance
+			max_value = val
+            
+		#If the image clarity starts to decrease
+		if val < last_value:
+			dec_count += 1
+		else:
+			dec_count = 0
+		#Image clarity is reduced by six consecutive frames
+		if dec_count > 6:
+			break
+		last_value = val
+        
+		#Increase the focal distance
+		focal_distance += 15
+		if focal_distance > 100:
+			break
+
+	focusing(max_index)
+
 
 def say(str):
 	print >> sys.stderr, str
@@ -73,6 +130,8 @@ def handleConfigInput(str):
 	global take_picture
 
 	camera = take_picture.camera
+
+	# say(str)
 
 	try:
 		if camera is not None:
@@ -134,8 +193,12 @@ def handleCommandInput(str):
 		vi = kv.find("=")
 		if vi >= 0:
 			k = kv[0:vi]
-			say("k=" + k + " v=" + kv[vi+1:])
+			# say("k=" + k + " v=" + kv[vi+1:])
 			take_picture.exif_tags[k] = kv[vi+1:]
+	elif str.startswith("location="):
+		kv = str[len("location")+1:]
+		exif = take_picture.setLocation(kv)
+		# say("exif=%s" % exif)
 
 
 def cameraServer():
@@ -174,7 +237,9 @@ def cameraServer():
 		camsink.add(take_picture)
 
 		try:
-			camera.start_recording(camsink, format='h264', bitrate=1000000)
+			# autofocus(camera)
+			camera.start_recording(camsink, format='h264', bitrate=10000000)
+			# camera.start_recording(camsink, format='rgb')
 
 			while _camServerRun:
 				camera.wait_recording(1)
@@ -188,7 +253,7 @@ def cameraServer():
 			os.kill(os.getpid(), 9)
 
 		except Exception as err:
-			say("Exception running camera")
+			say(err)
 			try:
 				camera.stop_recording()
 			except Exception as err:
@@ -211,13 +276,14 @@ def listenCommandFifo():
 	else:
 		os.mkfifo(commandFifo)
 
-	fifo = open(commandFifo, "r")
-
 	while _cmdFifoRun:
 		try:
+			fifo = open(commandFifo, "r")
 			line = fifo.readline()
+			say(line)
 			if len(line) > 0:
 				handleCommandInput(line.rstrip())
+			fifo.close()
 		except KeyboardInterrupt:
 			fifo.close()
 			os.unlink(commandFifo)
@@ -227,17 +293,20 @@ def listenConfigFifo():
 	global _configFifoRun
 
 	if(os.path.exists(configFifo)):
-		print("Using existing config fifo")
+		say("Using existing config fifo")
 	else:
+		say("Making config fifo")
 		os.mkfifo(configFifo)
-
-	fifo = open(configFifo, "r")
 
 	while _configFifoRun:
 		try:
+			fifo = open(configFifo, "r")
 			line = fifo.readline()
-			if len(line) > 0:
+			say(line)
+			if(len(line) > 0):
 				handleConfigInput(line.rstrip())
+			fifo.close()				
+
 		except KeyboardInterrupt:
 			fifo.close()
 			os.unlink(configFifo)
@@ -265,9 +334,11 @@ def doExit():
 
 # main
 
+say("Start command thread")
 fifoCommandThread = Thread(target = listenCommandFifo)
 fifoCommandThread.start()
 
+say("Start config thread")
 fifoConfigThread = Thread(target = listenConfigFifo)
 fifoConfigThread.start()
 

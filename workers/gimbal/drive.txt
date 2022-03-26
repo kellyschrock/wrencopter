@@ -1,0 +1,66 @@
+set roll=90
+set roll=80
+set roll=70
+set roll=60
+set roll=50
+set roll=40
+set roll=30
+set roll=20
+set roll=10
+set pitch=0
+set pitch=180
+set pitch=0
+set pitch=180
+set pitch=0
+set pitch=180
+set pitch=0
+set pitch=180
+set pitch=0
+set pitch=180
+set roll=90
+set pitch=180
+set pitch=0
+set pitch=180
+set pitch=0
+set pitch=180
+set pitch=0
+set pitch=180
+set pitch=0
+set pitch=180
+set roll=0 pitch=90
+set roll=10 pitch=80
+set roll=20 pitch=70
+set roll=30 pitch=60
+set roll=40 pitch=50
+set roll=50 pitch=40
+set roll=60 pitch=30
+set roll=70 pitch=20
+set roll=80 pitch=10
+set roll=90 pitch=0
+set roll=45 pitch=135
+set roll=135 pitch=45
+set roll=45 pitch=135
+set roll=135 pitch=45
+set roll=45 pitch=135
+set roll=135 pitch=45
+set roll=45 pitch=135
+set roll=135 pitch=45
+set roll=45 pitch=135
+set roll=135 pitch=45
+set roll=45 pitch=135
+set roll=135 pitch=45
+set roll=45 pitch=135
+set roll=135 pitch=45
+set roll=45 pitch=135
+set roll=135 pitch=45
+set roll=45 pitch=135
+set roll=135 pitch=45
+set roll=45 pitch=135
+set roll=135 pitch=45
+set roll=45 pitch=135
+set roll=135 pitch=45
+set roll=45 pitch=135
+set roll=135 pitch=45
+set roll=45 pitch=135
+set roll=135 pitch=45
+set roll=90 pitch=90
