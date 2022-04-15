@@ -82,7 +82,7 @@ class TakePicture:
 
 			self.camera.exif_tags.update(self.exif_tags)
 
-			self.camera.capture(filename, format='jpeg')
+			self.camera.capture(filename, format='jpeg', use_video_port=False, resize=(2500,1405))
 
 			if self.callback is not None:
 				self.callback("picture:{0}".format(filename))

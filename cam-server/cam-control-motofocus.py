@@ -203,7 +203,7 @@ def handleCommandInput(str):
 
 def cameraServer():
 	camera = picamera.PiCamera()
-	camera.resolution = (1280, 720)
+	camera.resolution = (640, 360)
 	camera.vflip = True
 	camera.hflip = True
 	camera.brightness = 50
@@ -236,10 +236,11 @@ def cameraServer():
 		camsink.add(video_recorder)
 		camsink.add(take_picture)
 
+		video_recorder.setCamera(camera)
+
 		try:
 			# autofocus(camera)
-			camera.start_recording(camsink, format='h264', bitrate=10000000)
-			# camera.start_recording(camsink, format='rgb')
+			camera.start_recording(camsink, format='h264', bitrate=1000000)
 
 			while _camServerRun:
 				camera.wait_recording(1)
