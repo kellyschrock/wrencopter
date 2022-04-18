@@ -97,11 +97,9 @@ function sendFifoConfig(str) {
 }
 
 function init() {
-    d(`init()`);
 }
 
 function close() {
-    d(`close()`);
 }
 
 function takePicture(callback) {
@@ -173,8 +171,6 @@ exports.setAwb = function(value) {
 }
 
 exports.setISO = function(value) {
-    d(`setISO(): value=${JSON.stringify(value)}`);
-
     const iso = value && value.iso;
     if(iso && iso.id) {
         sendFifoConfig(`iso ${iso.id}`);

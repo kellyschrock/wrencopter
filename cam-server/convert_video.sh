@@ -9,7 +9,7 @@ input=$1
 destdir=$2
 output=$(basename $1 .h264).mp4
 
-MP4Box -add $input $output && rm $input && mv $output $destdir > /dev/null 2>&1
+MP4Box -add $input $output  > /dev/null 2>&1 && rm $input && mv $output $destdir
 
 
 

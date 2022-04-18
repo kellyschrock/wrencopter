@@ -25,6 +25,8 @@ _camServerRun = True
 _cmdFifoRun = True
 _configFifoRun = True
 
+verbose = False
+
 def focusing(val):
     arducam_vcm.vcm_write(val)
 
@@ -81,7 +83,9 @@ def autofocus(camera):
 
 
 def say(str):
-	print >> sys.stderr, str
+	global verbose
+	if verbose:
+		print >> sys.stderr, str
 
 class StreamConnection:
 	def __init__(self, output):

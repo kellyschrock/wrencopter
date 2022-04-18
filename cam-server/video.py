@@ -4,8 +4,12 @@ import sys
 
 import utils
 
+verbose = False
+
 def say(str):
-	print >> sys.stderr, str
+	global verbose
+	if verbose:
+		print >> sys.stderr, str
 
 def getMediaDir():
 	media_dir = os.getenv("MEDIA_DIR")

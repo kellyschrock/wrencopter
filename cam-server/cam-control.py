@@ -20,8 +20,13 @@ _camServerRun = True
 _cmdFifoRun = True
 _configFifoRun = True
 
+verbose = False
+
 def say(str):
-	print >> sys.stderr, str
+	global verbose
+
+	if verbose:
+		print >> sys.stderr, str
 
 class StreamConnection:
 	def __init__(self, output):
@@ -169,28 +174,22 @@ def cameraServer():
 				camera.wait_recording(1)
 
 		except KeyboardInterrupt:
-			say("KeyboardInterrupt")
 			os.kill(os.getpid(), 9)
 
 		except ValueError as verr:
-			say("ValueError")
 			os.kill(os.getpid(), 9)
 
 		except Exception as err:
-			say("Exception running camera")
 			try:
 				camera.stop_recording()
 			except Exception as err:
 				os.kill(os.getpid(), 9)
 
 		finally:
-			say("Finally: Close camera")
 			try:
 				camsink.close()
 			except Exception as err:
 				os.kill(os.getpid(), 9)
-
-	say("camServer() done")
 
 def listenCommandFifo():
 	global _cmdFifoRun

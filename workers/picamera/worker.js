@@ -121,12 +121,8 @@ function onLoad() {
             messages.push(m);
         }
 
-        d(`Add RCInputs messages: ${messages}`);
-
         if(ATTRS.api.RCInputs.addEventListener) {
             ATTRS.api.RCInputs.addEventListener(mRCListener);
-        } else {
-            d(`No RC addEventListener()?`);
         }
     }
 
@@ -152,7 +148,6 @@ function onLoad() {
 
 // Called when unloading
 function onUnload() {
-    d("onUnload()");
 
     if(camera.close) {
         camera.close();
@@ -209,12 +204,8 @@ function onMavlinkMessage(msg) {
                     }
                     break;
                 }
-
-                case ATTRS.api.Mavlink.MAV_CMD_REQUEST_MESSAGE: {
-                    d(`OH YEAH: ${msg.name}`);
-                    break;
-                }
             }
+
             break;
         }
 
@@ -243,7 +234,7 @@ function doZoomIn() {
 // Called when the GCS sends a message to this worker. Message format is 
 // entirely dependent on agreement between the FCS and worker implementation.
 function onGCSMessage(msg) {
-    d(`onGCSMessage(): msg.id=${JSON.stringify(msg)}`);
+    // d(`onGCSMessage(): msg.id=${JSON.stringify(msg)}`);
 
     const result = {
         ok: true
@@ -306,7 +297,7 @@ function onGCSMessage(msg) {
 
         case "delete_file": {
             const file = path.join(getMediaPath(), msg.filename);
-            d(`file=${file}`);
+            // d(`file=${file}`);
             if(fs.existsSync(file)) {
                 fs.unlink(file, (err) => {
                     if(err) {
@@ -635,8 +626,6 @@ function onBroadcastRequest(msg) {
 }
 
 function getFeatures() {
-    d("getFeatures()");
-
     const ipAddress = getHostIP();
 
     if(!ipAddress) return null;
@@ -736,12 +725,9 @@ function sendCameraHeartbeat(sysid) {
 }
 
 function onContentDownload(msgId, contentId) {
-    d(`onContentDownload(${msgId}, ${contentId})`);
-
     switch (msgId) {
         case "get_media_content": {
             const filename = path.join(getMediaPath(), contentId);
-            d(`filename=${filename}`);
 
             try {
                 const content = fs.readFileSync(filename);
