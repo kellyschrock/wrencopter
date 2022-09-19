@@ -16,6 +16,8 @@ let mFocus = 0; // far focus
 let mZoom = 0; // no zoom
 let mLastLocationSet = 0;
 
+const CAMSERVER_ERRMSG = "Camera server is not running";
+
 const MIN_BRIGHTNESS = 10;
 const MAX_BRIGHTNESS = 100;
 const DEF_BRIGHTNESS = 50;
@@ -62,6 +64,21 @@ function setLocation(where) {
     }
 }
 
+// callback is function(boolean)
+function checkCamServer(callback) {
+    const { exec } = require("child_process");
+    const script = path.join(__dirname, "checkserver.sh");
+
+    exec(script, (err, stdout, stderr) => {
+        if (stdout) {
+            const running = (stdout.toString().trim() == "true");
+            callback(running);
+        } else {
+            callback(false);
+        }
+    });
+}
+
 function sendFifoCommand(command) {
     // d(`sendToFifo(${command})`);
 
@@ -103,35 +120,53 @@ function close() {
 }
 
 function takePicture(callback) {
-    try {
-        sendFifoCommand("picture");
-        callback(null, true);
-    } catch(ex) {
-        e(ex.message);
-        callback(ex, false);
-    }
+    checkCamServer((running) => {
+        try {
+            if(running) {
+                sendFifoCommand("picture");
+                callback(null, true);
+            } else {
+                callback(new Error(CAMSERVER_ERRMSG), false);
+            }
+        } catch (ex) {
+            e(ex.message);
+            callback(ex, false);
+        }
+    });
 }
 
 function startVideo(callback) {
-    try {
-        sendFifoCommand("record:start");
-        mRecordingVideo = true;
-        callback(null, mRecordingVideo);
-    } catch(ex) {
-        e(ex.message);
-        callback(ex, false);
-    }
+    checkCamServer((running) => {
+        try {
+            if(running) {
+                sendFifoCommand("record:start");
+                mRecordingVideo = true;
+                callback(null, mRecordingVideo);
+            } else {
+                callback(new Error(CAMSERVER_ERRMSG), false);
+            }
+        } catch (ex) {
+            e(ex.message);
+            callback(ex, false);
+        }
+    });
 }
 
 function stopVideo(callback) {
-    try {
-        sendFifoCommand("record:stop");
-        mRecordingVideo = false;
-        callback(null, mRecordingVideo);
-    } catch (ex) {
-        e(ex.message);
-        callback(ex, false);
-    }
+    checkCamServer((running) => {
+        try {
+            if(running) {
+                sendFifoCommand("record:stop");
+                mRecordingVideo = false;
+                callback(null, mRecordingVideo);
+            } else {
+                callback(new Error(CAMSERVER_ERRMSG), false);
+            }
+        } catch (ex) {
+            e(ex.message);
+            callback(ex, false);
+        }
+    });
 }
 
 function toggleVideo(callback) {

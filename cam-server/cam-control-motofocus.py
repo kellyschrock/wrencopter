@@ -207,11 +207,11 @@ def handleCommandInput(str):
 
 def cameraServer():
 	camera = picamera.PiCamera()
-	camera.resolution = (640, 360)
-	camera.vflip = True
-	camera.hflip = True
+	camera.resolution = (1920, 1080)
 	camera.brightness = 50
 	camera.framerate = 30
+	camera.vflip = True
+	camera.hflip = True
 	camera.meter_mode = 'backlit' # This seems to be better than 'auto'
 	# camera.sharpness = 3
 	# camera.saturation = 10
@@ -243,8 +243,8 @@ def cameraServer():
 		video_recorder.setCamera(camera)
 
 		try:
-			# autofocus(camera)
-			camera.start_recording(camsink, format='h264', bitrate=1000000)
+			# Record at a terrible bitrate and size to conserve network.
+			camera.start_recording(camsink, format='h264', bitrate=1000000, resize=(640,360))
 
 			while _camServerRun:
 				camera.wait_recording(1)

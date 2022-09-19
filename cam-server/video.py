@@ -55,13 +55,16 @@ class VideoRecorder:
 		if self.camera is None:
 			return
 
-		self.camera.stop_recording(splitter_port=2)
+		try:
+			self.camera.stop_recording(splitter_port=2)
 
-		media_dir = getMediaDir()
+			media_dir = getMediaDir()
 
-		if self.callback is not None:
-			finalName = "{0}/{1}.mp4".format(media_dir, utils.formatDateTime(datetime.now()))
-			os.system("sh convert_video.sh {0} {1} &".format(self.filename, media_dir))
-			self.callback("video_stop:{0}".format(finalName))
+			if self.callback is not None:
+				finalName = "{0}/{1}.mp4".format(media_dir, utils.formatDateTime(datetime.now()))
+				os.system("sh convert_video.sh {0} {1} &".format(self.filename, media_dir))
+				self.callback("video_stop:{0}".format(finalName))
+		except Exception as e:
+			say(e)
 
 

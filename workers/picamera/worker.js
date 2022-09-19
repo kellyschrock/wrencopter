@@ -267,7 +267,7 @@ function onGCSMessage(msg) {
                 if(err) {
                     result.ok = false;
                     result.message = err.message;
-                    sendCameraError("Failed to toggle video");
+                    sendCameraError(`Failed to toggle video: ${err.message}`);
                 } else {
                     sendUpdateRecordingStatus(recording);
                 }
