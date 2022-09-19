@@ -346,6 +346,84 @@ function onGCSMessage(msg) {
 		case "led_command": {
 			return doLEDCommand(msg);
 		}
+
+        case "led_mode": {
+            return doLEDMode(msg);
+        }
+    }
+
+    return result;
+}
+
+/*
+Returns an array that looks like this:
+
+[
+    {id: "white", name: "White"},
+    {id: "red", name: "Red"},
+    {id: "green", name: "Green"},
+    {id: "yellow", name: "Yellow"},
+]
+
+...derived from the LED configuration
+*/
+function getLEDParamValues() {
+    const output = [];
+
+    for(let prop in mMenuItems) {
+        const item = mMenuItems[prop];
+
+        output.push({ id: item.id, name: item.text });
+    }
+
+    return output;
+}
+
+function onBroadcastRequest(msg) {
+    switch(msg.type) {
+        case "mission_item_support": {
+            return {
+                id: ATTRS.id,
+                name: ATTRS.name,
+                actions: [
+                    { 
+                        id: "led_mode",     // action id
+                        name: "LED mode",   // action text for UI
+                        msg_id: "led_mode", // message_id
+                        params: [
+                            {
+                                id: "mode", 
+                                name: "Mode", 
+                                type: "enum", 
+                                values: getLEDParamValues(), 
+                                default: "red" 
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+
+        default: {
+            return null;
+        }
+    }
+}
+
+function doLEDMode(msg) {
+    const result = { ok: true };
+
+    if(msg.mode) {
+        const item = mMenuItems[msg.mode];
+        if(item) {
+            runLed({ item_id: msg.mode });
+        } else {
+            result.ok = false;
+            result.message = `No LED mode with id ${msg.mode} specified in ${JSON.stringify(msg)}`;
+        }
+    } else {
+        result.ok = false;
+        result.message = `No mode specified in message: ${JSON.stringify(msg)}`;
     }
 
     return result;
@@ -388,8 +466,6 @@ function runLed(msg) {
     const result = {
         ok: true
     };
-
-    // d(`mMenuItems=${JSON.stringify(mMenuItems)}`);
 
     const item = mMenuItems[msg.item_id];
     d(`item=${JSON.stringify(item)}`);
@@ -499,16 +575,6 @@ function stopShellProcess() {
         return { ok: false, message: "Child process is not running" };
     }
 
-    // ATTRS.sendGCSMessage(ATTRS.id, {
-    //     id: "screen_update",
-    //     screen_id: "commands",
-    //     panel_id: "worker_flight_buttons",
-    //     values: {
-    //         btn_stop_shell: { enabled: false },
-    //         btn_start_shell: { enabled: true }
-    //     }
-    // });
-
     shellCommand({command: "quit"});
 
     return { ok: true, message: "stopped" };
@@ -598,6 +664,7 @@ exports.onMavlinkMessage = onMavlinkMessage;
 exports.onGCSMessage = onGCSMessage;
 exports.onScreenEnter = onScreenEnter;
 exports.onEnabledChanged = onEnabledChanged;
+exports.onBroadcastRequest = onBroadcastRequest;
 
 function testModeNames() {
     // d(JSON.stringify(mModeNameMap));
