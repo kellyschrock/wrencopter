@@ -1,0 +1,14 @@
+[Unit]
+Description=SolexCC Relay
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/pi/wfb-relay
+ExecStart=/home/pi/wfb-relay/scc-relay.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+

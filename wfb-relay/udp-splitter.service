@@ -1,0 +1,14 @@
+[Unit]
+Description=UDP Splitter (video)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/pi/wfb-relay
+ExecStart=/home/pi/wfb-relay/udpsplitter.js 7070 5400 5600
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+

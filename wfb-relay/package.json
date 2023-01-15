@@ -1,0 +1,14 @@
+{
+  "name": "wfb-relay",
+  "version": "1.0.0",
+  "description": "WFB relay",
+  "main": "client_events.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kelly",
+  "license": "ISC",
+  "dependencies": {
+    "always-tail": "^0.2.0"
+  }
+}

@@ -3,4 +3,4 @@
 **/*.pyc
 **/.vscode
 workers/missions
-
+**/node_modules
