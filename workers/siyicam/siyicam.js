@@ -9,6 +9,8 @@ const {
     getUint16BytesLE
 } = require("./siyi_crc");
 
+const { ComPort } = require("./comport");
+
 const CMDID_FIRMWARE_VERSION = 0x01;
 const CMDID_HARDWARE_ID = 0x02;
 const CMDID_AUTOFOCUS = 0x04;
@@ -43,6 +45,7 @@ function preparePacket(bytes) {
     const crc = crc16Calc(bytes, bytes.length, 0);
     const end = getUint16BytesLE(crc);
 
+    // input doesn't have CRC on the end, that's our job
     if(end && end.forEach) {
         end.forEach(b => bytes.push(b));
     } else {
@@ -59,15 +62,15 @@ function getCameraZoomCommand(zoomCommand) {
     return preparePacket([0x55, 0x66, 0x01, 0x01, 0x00, 0x00, 0x00, CMDID_ZOOM, zoomCommand]);
 }
 
-const MFCMD_IN = 0x01;
+const MFCMD_CLOSE = 0xFF; // -1
 const MFCMD_STOP = 0x00;
-const MFCMD_OUT = 0xFF;
+const MFCMD_LONG = 0x01;
 function getManualFocusCommand(cmd) {
     return preparePacket([0x55, 0x66, 0x01, 0x01, 0x00, 0x00, 0x00, CMDID_MANUAL_FOCUS, cmd]);
 }
 
 // Roll and yaw are both -100~0~100. 0 is center. Higher numbers away from 0 are faster in 
-// a given direction (not sure which)
+// a given direction (not sure which is which. Is -10 left or right?)
 function getGimbalRotateCommand(yaw, pitch) {
     return preparePacket([0x55, 0x66, 0x01, 0x02, 0x00, 0x00, 0x00, CMDID_GIMBAL_ROTATION, yaw, pitch]);
 }
@@ -131,11 +134,11 @@ class SiyiCamera {
     }
 
     manualFocusIn() {
-        sendPacket(getManualFocusCommand(MFCMD_IN));
+        sendPacket(getManualFocusCommand(MFCMD_CLOSE));
     }
 
     manualFocusOut() {
-        sendPacket(getManualFocusCommand(MFCMD_OUT));
+        sendPacket(getManualFocusCommand(MFCMD_LONG));
     }
 
     manualFocusStop() {
@@ -187,7 +190,7 @@ const CMD_ZOOM_EXAMPLE = [
     0x8d, 0x64  // CRC (low byte first)
 ];
 
-// TODO: Dissect these and get to know them better.
+// Example commands from the documentation
 // Zoom 1
 const CMD_ZOOM_IN = [0x55, 0x66, 0x01, 0x01, 0x00, 0x00, 0x00, 0x05, 0x01, 0x8d, 0x64];
 // Zoom - 1
@@ -244,8 +247,8 @@ function testPackets() {
         dump("zoom in", getCameraZoomCommand(ZOOMCMD_IN, seq++));
         dump("zoom out", getCameraZoomCommand(ZOOMCMD_OUT, seq++));
         dump("zoom stop", getCameraZoomCommand(ZOOMCMD_STOP, seq++));
-        dump("manual in", getManualFocusCommand(MFCMD_IN, seq++));
-        dump("manual out", getManualFocusCommand(MFCMD_OUT, seq++));
+        dump("manual in", getManualFocusCommand(MFCMD_CLOSE, seq++));
+        dump("manual out", getManualFocusCommand(MFCMD_LONG, seq++));
         dump("manual stop", getManualFocusCommand(MFCMD_STOP, seq++));
         dump("gimbal yaw", getGimbalRotateCommand(10, 0, seq++));
         dump("gimbal pitch", getGimbalRotateCommand(0, 10, seq++));

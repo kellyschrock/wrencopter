@@ -13,28 +13,11 @@ let targetPort = 0;
 function d(str) { console.log(str); }
 function e(str) { console.error(str); }
 
-function requestListener(req, res) {
-    d(`request: ${req.url} method=${req.method}`);
-
-    let reqBody = null;
-    if(req.method == "POST") {
-        d(`Method is a POST`);
-
-        reqBody = "";
-        req.on("data", (data) => {
-            reqBody += data.toString();
-        });
-        req.on("end", () => {
-            d(`request body: ${reqBody}`);
-        });
-    }
+function doGET(req, res) {
+    d(`Method is a GET`);
 
     const headers = Object.assign({}, req.headers);
     headers.host = targetHost;
-    if (req.method == "POST") {
-        headers["Content-Type"] = "application/json";
-        headers["Content-Length"] = (reqBody && reqBody.length) || 0;
-    }
 
     const options = {
         host: targetHost,
@@ -46,8 +29,6 @@ function requestListener(req, res) {
 
     try {
         const req = http.request(options, (response) => {
-            // d(`response: ${response}`);
-
             let body = "";
             response.setEncoding("utf8");
             response.on("data", (data) => {
@@ -59,20 +40,89 @@ function requestListener(req, res) {
             response.pipe(res);
         });
 
-        if (reqBody) {
-            d(`Write POST body: ${reqBody}`)
-            req.write(reqBody);
-        }
-
-        if(req.method == "POST") {
-            d(`Send POST request`);
-        }
+        d(`Send GET request`);
         req.end();
     } catch (ex) {
         e(ex.message);
 
         res.writeHead(500);
         res.end(`${ex.message}\n`);
+    }
+}
+
+function doPOST(req, res) {
+    d(`Method is a POST`);
+
+    let reqBody = "";
+    req.on("data", (data) => {
+        reqBody += data.toString();
+    });
+
+    req.on("end", () => {
+        d(`request body: ${reqBody}`);
+
+        const headers = Object.assign({}, req.headers);
+        headers.host = targetHost;
+        headers["Content-Type"] = "application/json";
+        headers["Content-Length"] = (reqBody && reqBody.length) || 0;
+
+        const options = {
+            host: targetHost,
+            port: targetPort,
+            path: req.url,
+            method: req.method,
+            headers: headers
+        };
+
+        try {
+            const req = http.request(options, (response) => {
+                // d(`response: ${response}`);
+
+                let body = "";
+                response.setEncoding("utf8");
+                response.on("data", (data) => {
+                    body += data;
+                }).on("end", () => {
+                    d(`response.body=${body}`);
+                });
+
+                response.pipe(res);
+            });
+
+            if (reqBody) {
+                d(`Write POST body: ${reqBody}`)
+                req.write(reqBody);
+            }
+
+            d(`Send POST request`);
+            req.end();
+        } catch (ex) {
+            e(ex.message);
+
+            res.writeHead(500);
+            res.end(`${ex.message}\n`);
+        }
+    });
+}
+
+function requestListener(req, res) {
+    d(`request: ${req.url} method=${req.method}`);
+
+    switch(req.method) {
+        case "POST": {
+            doPOST(req, res);
+            break;
+        }
+
+        case "GET": {
+            doGET(req, res);
+            break;
+        }
+
+        default: {
+            d(`Unknown request method: ${req.method}`);
+            break;
+        }
     }
 }
 

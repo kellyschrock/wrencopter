@@ -207,20 +207,23 @@ def handleCommandInput(str):
 
 def cameraServer():
 	camera = picamera.PiCamera()
-	camera.resolution = (1920, 1080)
-	camera.brightness = 50
-	camera.framerate = 30
+	# camera.resolution = (1920, 1080)
+	# camera.resolution = (1280, 720)
+	# camera.resolution = (640, 360)
+	# camera.resolution = (800, 450)
 	camera.vflip = True
 	camera.hflip = True
-	camera.meter_mode = 'backlit' # This seems to be better than 'auto'
-	# camera.sharpness = 3
-	# camera.saturation = 10
+	camera.brightness = 50
+	camera.framerate = 30
+	camera.meter_mode = 'backlit' # This (backlit) seems to be better than 'auto'
+	# camera.sharpness = 10
+	# camera.saturation = 5
 	# camera.image_effect = 'negative'
 	# camera.exposure_mode = 'night'
-	# camera.contrast = 1
+	camera.contrast = 1
 	camera.exposure_mode = 'antishake'
-	# camera.drc_strength = 'high'
-	# camera.sensor_mode = 1
+	camera.drc_strength = 'high'
+	# camera.sensor_mode = 2
 	# camera.zoom = (0.0, 0.0, 1.0, 1.0)
 	# camera.video_denoise = False
 	camera.video_stabilization = True
@@ -243,8 +246,9 @@ def cameraServer():
 		video_recorder.setCamera(camera)
 
 		try:
-			# Record at a terrible bitrate and size to conserve network.
-			camera.start_recording(camsink, format='h264', bitrate=1000000, resize=(640,360))
+			# autofocus(camera)
+			# sps_timing is key to getting gstreamer to handle the stream on the receiving end
+			camera.start_recording(camsink, format='h264', bitrate=7000000, inline_headers=True, sps_timing=True)
 
 			while _camServerRun:
 				camera.wait_recording(1)
@@ -310,7 +314,7 @@ def listenConfigFifo():
 			say(line)
 			if(len(line) > 0):
 				handleConfigInput(line.rstrip())
-			fifo.close()				
+			fifo.close()
 
 		except KeyboardInterrupt:
 			fifo.close()

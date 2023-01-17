@@ -142,6 +142,7 @@ def cameraServer():
 	camera.hflip = True
 	camera.framerate = 30
 	camera.meter_mode = 'backlit' # This seems to be better than 'auto'
+	camera.framerate = 30
 	# camera.sharpness = 3
 	# camera.saturation = 10
 	# camera.image_effect = 'negative'

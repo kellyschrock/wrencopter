@@ -37,8 +37,17 @@ function splitter(inPort, outPort) {
         }
     });
 
+    sender.on("message", function(message, rinfo) {
+        d(`got message on sender: ${message.toString()} rinfo=${rinfo.address}`);
+            if (clients.indexOf(rinfo.address) == -1) {
+            d(`Add client at ${rinfo.address}`);
+            clients.push(rinfo.address);
+        }
+    });
+
     d(`Listening for UDP at ${inPort}`);
     listener.bind(inPort);
+    sender.bind(outPort);
 }
 
 function server(commandPort) {

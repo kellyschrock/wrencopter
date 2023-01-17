@@ -41,7 +41,7 @@ const mRCListener = {
 };
 
 function d(str) {
-    if(process.mainModule === module) {
+    if(require.main === module) {
         console.log(str);
     } else {
         ATTRS.log(ATTRS.id, str);
@@ -82,6 +82,7 @@ function onLoad() {
 function onEnabledChanged(enabled) {
     d(`onEnabledChanged(${enabled})`);
 
+    // No idea why you'd disable a camera, but there you go.
     if(enabled) {
     } else {
     }
@@ -193,14 +194,6 @@ function toModeName(type, mode) {
 
 function hasGpsFix() {
     return (mVehicleState.fixType >= 2);
-}
-
-function fixStateName() {
-    return (hasGpsFix())? "fix": "nofix";
-}
-
-function armStateName() {
-    return (mVehicleState.armed)? "armed": "disarmed"
 }
 
 function onMavlinkMessage(msg) {
@@ -398,6 +391,7 @@ function sendContentDialogMsg() {
 
 function onScreenEnter(screen) {
     switch (screen) {
+        // TODO: This is wrong. Should go on the camera panel.
         case ATTRS.api.WorkerUI.Const.SCREEN_COMMANDS: {
             const body = ATTRS.api.WorkerUI.loadLayout(__dirname, ATTRS.api.WorkerUI.Const.PANEL_WORKER_FLIGHT_BUTTONS);
 
